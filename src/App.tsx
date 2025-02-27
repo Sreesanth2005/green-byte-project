@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SchedulePickup from "./pages/SchedulePickup";
 import NotFound from "./pages/NotFound";
+import AiAssistant from "./components/AiAssistant";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           {/* Add more routes as we implement them */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AiAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

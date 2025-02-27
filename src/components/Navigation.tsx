@@ -12,6 +12,9 @@ const Navigation = () => {
           <span className="font-semibold text-lg text-primary">Green Byte</span>
         </Link>
         <div className="flex items-center space-x-6">
+          <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+            Home
+          </Link>
           <Link to="/schedule-pickup" className="text-sm font-medium hover:text-primary transition-colors">
             Schedule Pickup
           </Link>
