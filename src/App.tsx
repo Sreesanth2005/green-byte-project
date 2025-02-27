@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import SchedulePickup from "./pages/SchedulePickup";
 import Marketplace from "./pages/Marketplace";
 import MyEcoCredits from "./pages/MyEcoCredits";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import AiAssistant from "./components/AiAssistant";
 
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/schedule-pickup" element={<SchedulePickup />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/my-ecocredits" element={<MyEcoCredits />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <AiAssistant />
