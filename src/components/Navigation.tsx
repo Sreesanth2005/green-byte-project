@@ -1,13 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { RecycleBin, Award, User } from "lucide-react";
+import { Recycle, Award, User } from "lucide-react";
 
 const Navigation = () => {
   return (
     <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 py-4 px-6 border-b">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <RecycleBin className="w-6 h-6 text-primary" />
+          <Recycle className="w-6 h-6 text-primary" />
           <span className="font-semibold text-lg">EcoReward</span>
         </div>
         <div className="flex items-center space-x-8">
