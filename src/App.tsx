@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SchedulePickup from "./pages/SchedulePickup";
+import Marketplace from "./pages/Marketplace";
+import MyEcoCredits from "./pages/MyEcoCredits";
 import NotFound from "./pages/NotFound";
 import AiAssistant from "./components/AiAssistant";
 
@@ -20,7 +22,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/schedule-pickup" element={<SchedulePickup />} />
-          {/* Add more routes as we implement them */}
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/my-ecocredits" element={<MyEcoCredits />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <AiAssistant />
