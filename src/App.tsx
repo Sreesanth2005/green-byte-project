@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SchedulePickup from "./pages/SchedulePickup";
 import Marketplace from "./pages/Marketplace";
+import ProductDetails from "./pages/ProductDetails";
 import MyEcoCredits from "./pages/MyEcoCredits";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -25,7 +27,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/schedule-pickup" element={<SchedulePickup />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/my-ecocredits" element={<MyEcoCredits />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="*" element={<NotFound />} />

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Star, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Marketplace = () => {
   const [activeBanner, setActiveBanner] = useState(0);
@@ -226,28 +227,30 @@ const Marketplace = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                    <div className="flex items-center mb-2">
-                      <div className="flex items-center text-primary mr-2">
-                        <Star className="w-4 h-4 fill-primary" />
-                        <span className="ml-1">{product.rating}</span>
+                  <Link to={`/product/${product.id}`} className="block">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                      <div className="flex items-center mb-2">
+                        <div className="flex items-center text-primary mr-2">
+                          <Star className="w-4 h-4 fill-primary" />
+                          <span className="ml-1">{product.rating}</span>
+                        </div>
+                        <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
                       </div>
-                      <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xl font-semibold">{product.ecoCredits} Credits</span>
-                        <p className="text-xs text-gray-500">(₹{product.price})</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xl font-semibold">{product.ecoCredits} Credits</span>
+                          <p className="text-xs text-gray-500">(₹{product.price})</p>
+                        </div>
+                        <Button>Add to Cart</Button>
                       </div>
-                      <Button>Add to Cart</Button>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               ))}
             </div>
