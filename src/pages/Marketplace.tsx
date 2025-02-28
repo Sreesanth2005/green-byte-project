@@ -11,6 +11,8 @@ const Marketplace = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const banners = [
     {
@@ -27,25 +29,104 @@ const Marketplace = () => {
     },
   ];
 
+  const categories = [
+    { id: "all", name: "All Products" },
+    { id: "phones", name: "Smartphones" },
+    { id: "laptops", name: "Laptops & Computers" },
+    { id: "tablets", name: "Tablets & E-Readers" },
+    { id: "accessories", name: "Accessories" },
+    { id: "audio", name: "Audio Devices" },
+  ];
+
   const products = [
     {
       id: 1,
       name: "Refurbished iPhone 12",
       price: 499,
+      ecoCredits: 4990,
       rating: 4.5,
       reviews: 128,
       image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
+      category: "phones",
     },
     {
       id: 2,
       name: "Dell XPS 13 Laptop",
       price: 899,
+      ecoCredits: 8990,
       rating: 4.8,
       reviews: 256,
       image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400&h=300&fit=crop",
+      category: "laptops",
     },
-    // Add more products as needed
+    {
+      id: 3,
+      name: "iPad Air (2020)",
+      price: 449,
+      ecoCredits: 4490,
+      rating: 4.7,
+      reviews: 189,
+      image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=300&fit=crop",
+      category: "tablets",
+    },
+    {
+      id: 4,
+      name: "Sony WH-1000XM4 Headphones",
+      price: 249,
+      ecoCredits: 2490,
+      rating: 4.9,
+      reviews: 320,
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
+      category: "audio",
+    },
+    {
+      id: 5,
+      name: "Samsung Galaxy Watch",
+      price: 179,
+      ecoCredits: 1790,
+      rating: 4.6,
+      reviews: 142,
+      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
+      category: "accessories",
+    },
+    {
+      id: 6,
+      name: "Google Pixel 6",
+      price: 549,
+      ecoCredits: 5490,
+      rating: 4.4,
+      reviews: 98,
+      image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&h=300&fit=crop",
+      category: "phones",
+    },
+    {
+      id: 7,
+      name: "MacBook Pro M1",
+      price: 1199,
+      ecoCredits: 11990,
+      rating: 4.8,
+      reviews: 276,
+      image: "https://images.unsplash.com/photo-1537498425277-c283d32ef9db?w=400&h=300&fit=crop",
+      category: "laptops",
+    },
+    {
+      id: 8,
+      name: "Wireless Earbuds",
+      price: 79,
+      ecoCredits: 790,
+      rating: 4.3,
+      reviews: 105,
+      image: "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f37?w=400&h=300&fit=crop",
+      category: "audio",
+    },
   ];
+
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = activeCategory === "all" || product.category === activeCategory;
+    const matchesSearch = searchQuery === "" || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleSubmitFeedback = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,48 +183,80 @@ const Marketplace = () => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="flex items-center justify-between mb-8">
+          {/* Search and Filter */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4">
             <h2 className="text-3xl font-bold">Featured Products</h2>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              <div className="relative flex-grow max-w-md">
                 <Input
                   placeholder="Search products..."
-                  className="pl-10 w-64"
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               </div>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
+              <div className="relative">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Filter
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <div className="flex items-center mb-2">
-                    <div className="flex items-center text-primary mr-2">
-                      <Star className="w-4 h-4 fill-primary" />
-                      <span className="ml-1">{product.rating}</span>
+          {/* Category Tabs */}
+          <div className="mb-8 overflow-x-auto">
+            <div className="flex space-x-2 min-w-max pb-2">
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={activeCategory === category.id ? "default" : "outline"}
+                  onClick={() => setActiveCategory(category.id)}
+                  className="whitespace-nowrap"
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          {filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center text-primary mr-2">
+                        <Star className="w-4 h-4 fill-primary" />
+                        <span className="ml-1">{product.rating}</span>
+                      </div>
+                      <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
                     </div>
-                    <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-semibold">${product.price}</span>
-                    <Button>Add to Cart</Button>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xl font-semibold">{product.ecoCredits} Credits</span>
+                        <p className="text-xs text-gray-500">(₹{product.price})</p>
+                      </div>
+                      <Button>Add to Cart</Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold mb-2">No products found</h3>
+              <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
         </div>
 
         {/* Feedback Button */}
