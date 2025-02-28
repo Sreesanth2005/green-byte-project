@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Lock, MapPin, ShoppingBag, CreditCard, LogOut, Settings, Bell } from "lucide-react";
+import { User, Lock, MapPin, ShoppingBag, CreditCard, LogOut, Settings, Bell, Recycle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Profile = () => {
