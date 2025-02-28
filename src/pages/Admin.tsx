@@ -558,7 +558,7 @@ const Admin = () => {
                           <div className="text-sm text-gray-500">{product.eco_credits_price} credits</div>
                         </div>
                         <div className="col-span-1">
-                          <Badge variant={product.stock > 0 ? 'success' : 'destructive'}>
+                          <Badge variant={product.stock > 0 ? 'default' : 'destructive'}>
                             {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                           </Badge>
                         </div>
@@ -758,7 +758,7 @@ const Admin = () => {
                           <Badge
                             variant={
                               transaction.type === 'earned' || transaction.type === 'converted_to_credits'
-                                ? 'success'
+                                ? 'default'
                                 : 'secondary'
                             }
                           >
