@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Info, ArrowUpDown, Download, Filter, Award, Lightbulb, Globe, TrendingDown, Bookmark } from "lucide-react";
+import { Info, ArrowUpDown, Download, Filter, Award, Lightbulb, Globe, TrendingDown, Bookmark, MapPin } from "lucide-react";
 
 const Analysis = () => {
   const [region, setRegion] = useState("global");
@@ -436,5 +436,5 @@ const Analysis = () => {
 
 export default Analysis;
 
-// Missing imports - add at the top
+// Additional imports for the icons needed
 import { Shield, ShoppingBag, Recycle, Trophy, Users } from "lucide-react";
