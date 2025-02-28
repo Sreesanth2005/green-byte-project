@@ -1,73 +1,46 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Coins, TrendingUp, Recycle, Award, ArrowRight, ArrowLeft } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { supabase, Transaction, User } from "@/lib/supabase";
-import { convertToEcoCredits, convertToMoney } from "@/lib/razorpay";
 
 const MyEcoCredits = () => {
   const [rupeeAmount, setRupeeAmount] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [convertionType, setConvertionType] = useState<"toCredits" | "toRupees">("toCredits");
-  const [userData, setUserData] = useState<User | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserDataAndTransactions = async () => {
-      try {
-        setIsLoading(true);
-        // Get current user session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          toast({
-            title: "Please log in",
-            description: "You need to be logged in to view your eco-credits",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const userId = session.user.id;
-
-        // Fetch user data
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
-        if (userError) throw userError;
-        setUserData(userData as User);
-
-        // Fetch user transactions
-        const { data: transactionData, error: transactionError } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-        
-        if (transactionError) throw transactionError;
-        setTransactions(transactionData as Transaction[]);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load your eco-credits data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserDataAndTransactions();
-  }, []);
+  const transactions = [
+    {
+      id: 1,
+      type: "Earned",
+      amount: 50,
+      description: "Recycled Laptop",
+      date: "2024-03-01",
+    },
+    {
+      id: 2,
+      type: "Spent",
+      amount: 20,
+      description: "Marketplace Purchase",
+      date: "2024-02-28",
+    },
+    {
+      id: 3,
+      type: "Added",
+      amount: 100,
+      description: "Rupees Conversion (₹10)",
+      date: "2024-02-25",
+    },
+    {
+      id: 4,
+      type: "Withdrawn",
+      amount: 50,
+      description: "Converted to Rupees (₹5)",
+      date: "2024-02-20",
+    },
+  ];
 
   const handleRupeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -83,186 +56,17 @@ const MyEcoCredits = () => {
     setRupeeAmount(value ? (parseInt(value) / 10).toString() : "");
   };
 
-  const handleConvert = async () => {
-    if (!userData) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to convert currency",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      if (convertionType === "toCredits") {
-        if (!rupeeAmount || parseInt(rupeeAmount) <= 0) {
-          toast({
-            title: "Invalid amount",
-            description: "Please enter a valid amount to convert",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Convert money to eco-credits
-        const result = await convertToEcoCredits(
-          userData.id, 
-          parseInt(rupeeAmount)
-        );
-
-        if (result.success) {
-          toast({
-            title: "Conversion Successful",
-            description: `Converted ₹${rupeeAmount} to ${creditAmount} EcoCredits`,
-          });
-          
-          // Refresh user data and transactions
-          const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', userData.id)
-            .single();
-          
-          setUserData(data as User);
-          
-          // Refresh transactions
-          const { data: transactionData } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', userData.id)
-            .order('created_at', { ascending: false });
-          
-          setTransactions(transactionData as Transaction[]);
-        } else {
-          toast({
-            title: "Conversion Failed",
-            description: result.error || "There was an error processing your payment",
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Convert eco-credits to money
-        if (!creditAmount || parseInt(creditAmount) <= 0) {
-          toast({
-            title: "Invalid amount",
-            description: "Please enter a valid amount to convert",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const credits = parseInt(creditAmount);
-        
-        // Check if user has enough credits
-        if (userData.eco_credits < credits) {
-          toast({
-            title: "Insufficient credits",
-            description: `You only have ${userData.eco_credits} EcoCredits available`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const result = await convertToMoney(
-          userData.id,
-          credits
-        );
-
-        if (result.success) {
-          toast({
-            title: "Conversion Successful",
-            description: `Converted ${creditAmount} EcoCredits to ₹${rupeeAmount}`,
-          });
-          
-          // Refresh user data and transactions
-          const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', userData.id)
-            .single();
-          
-          setUserData(data as User);
-          
-          // Refresh transactions
-          const { data: transactionData } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', userData.id)
-            .order('created_at', { ascending: false });
-          
-          setTransactions(transactionData as Transaction[]);
-        } else {
-          toast({
-            title: "Conversion Failed",
-            description: result.error || "There was an error processing your conversion",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error during conversion:", error);
-      toast({
-        title: "Conversion Failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
+  const handleConvert = () => {
+    // This would handle the actual conversion in a real app
+    console.log(convertionType === "toCredits" 
+      ? `Converting ₹${rupeeAmount} to ${creditAmount} EcoCredits` 
+      : `Converting ${creditAmount} EcoCredits to ₹${rupeeAmount}`
+    );
     
     // Reset form
     setRupeeAmount("");
     setCreditAmount("");
   };
-
-  // If database connection is enabled, use actual transactions, else use sample data
-  const displayTransactions = transactions.length > 0 ? transactions : [
-    {
-      id: "1",
-      user_id: "user1",
-      type: "earned",
-      amount: 50,
-      description: "Recycled Laptop",
-      created_at: "2024-03-01T00:00:00.000Z",
-    },
-    {
-      id: "2",
-      user_id: "user1",
-      type: "spent",
-      amount: 20,
-      description: "Marketplace Purchase",
-      created_at: "2024-02-28T00:00:00.000Z",
-    },
-    {
-      id: "3",
-      user_id: "user1",
-      type: "converted_to_credits",
-      amount: 100,
-      description: "Rupees Conversion (₹10)",
-      created_at: "2024-02-25T00:00:00.000Z",
-    },
-    {
-      id: "4",
-      user_id: "user1",
-      type: "converted_to_money",
-      amount: 50,
-      description: "Converted to Rupees (₹5)",
-      created_at: "2024-02-20T00:00:00.000Z",
-    },
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <main className="max-w-7xl mx-auto px-6 pt-24 pb-16 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Loading your eco-credits...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -277,7 +81,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Total Credits</h3>
               <Coins className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">{userData?.eco_credits || 0}</p>
+            <p className="text-3xl font-bold">1,250</p>
             <p className="text-sm text-gray-600">Available to spend</p>
           </div>
           
@@ -286,14 +90,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Monthly Earned</h3>
               <TrendingUp className="w-6 h-6 text-success" />
             </div>
-            <p className="text-3xl font-bold">
-              {displayTransactions
-                .filter(t => 
-                  t.type === "earned" && 
-                  new Date(t.created_at).getMonth() === new Date().getMonth()
-                )
-                .reduce((sum, t) => sum + t.amount, 0)}
-            </p>
+            <p className="text-3xl font-bold">320</p>
             <p className="text-sm text-gray-600">This month</p>
           </div>
           
@@ -302,11 +99,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Items Recycled</h3>
               <Recycle className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">
-              {displayTransactions
-                .filter(t => t.type === "earned" && t.description.includes("Recycled"))
-                .length}
-            </p>
+            <p className="text-3xl font-bold">15</p>
             <p className="text-sm text-gray-600">Total items</p>
           </div>
           
@@ -315,14 +108,8 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Current Level</h3>
               <Award className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">
-              {userData && userData.eco_credits >= 1000 ? "Gold" : 
-               userData && userData.eco_credits >= 500 ? "Silver" : "Bronze"}
-            </p>
-            <p className="text-sm text-gray-600">
-              {userData && userData.eco_credits >= 1000 ? "Top tier achieved!" : 
-               userData && userData.eco_credits >= 500 ? "250 to next level" : "500 to next level"}
-            </p>
+            <p className="text-3xl font-bold">Gold</p>
+            <p className="text-sm text-gray-600">250 to next level</p>
           </div>
         </div>
 
@@ -395,18 +182,18 @@ const MyEcoCredits = () => {
             <h2 className="text-xl font-semibold">Transaction History</h2>
           </div>
           <div className="divide-y">
-            {displayTransactions.map((transaction) => (
+            {transactions.map((transaction) => (
               <div key={transaction.id} className="p-6 flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{transaction.description}</p>
-                  <p className="text-sm text-gray-600">{new Date(transaction.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{transaction.date}</p>
                 </div>
                 <div className={`text-lg font-semibold ${
-                  transaction.type === 'earned' || transaction.type === 'converted_to_credits' 
+                  transaction.type === 'Earned' || transaction.type === 'Added' 
                     ? 'text-success' 
                     : 'text-destructive'
                 }`}>
-                  {transaction.type === 'earned' || transaction.type === 'converted_to_credits' 
+                  {transaction.type === 'Earned' || transaction.type === 'Added' 
                     ? '+' 
                     : '-'}{transaction.amount} credits
                 </div>
