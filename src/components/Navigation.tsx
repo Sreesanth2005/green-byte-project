@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Recycle, User, Menu, X } from "lucide-react";
+import { Recycle, User, Menu, X, BarChart2, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -15,7 +15,7 @@ const Navigation = () => {
     <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 py-3 px-6 border-b">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/lovable-uploads/4d738902-b757-49a8-9fe8-1354783f4812.png" alt="Green Byte Logo" className="w-8 h-8" />
+          <img src="/lovable-uploads/24b8d545-2e4e-42c1-9d48-3e0dd4888244.png" alt="Green Byte Logo" className="w-8 h-8" />
           <span className="font-semibold text-lg text-primary">Green Byte</span>
         </Link>
         
@@ -40,6 +40,12 @@ const Navigation = () => {
           </Link>
           <Link to="/my-ecocredits" className="text-sm font-medium hover:text-primary transition-colors">
             My EcoCredits
+          </Link>
+          <Link to="/analysis" className="text-sm font-medium hover:text-primary transition-colors">
+            Analysis
+          </Link>
+          <Link to="/about-us" className="text-sm font-medium hover:text-primary transition-colors">
+            About Us
           </Link>
           <Button variant="outline" size="sm" asChild>
             <Link to="/login">Login</Link>
@@ -83,6 +89,20 @@ const Navigation = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               My EcoCredits
+            </Link>
+            <Link 
+              to="/analysis" 
+              className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Analysis
+            </Link>
+            <Link 
+              to="/about-us" 
+              className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About Us
             </Link>
             <Link 
               to="/profile" 

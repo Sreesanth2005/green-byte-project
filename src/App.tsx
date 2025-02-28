@@ -14,6 +14,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import AiAssistant from "./components/AiAssistant";
+import Analysis from "./pages/Analysis";
+import AboutUs from "./pages/AboutUs";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +35,9 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/analysis" element={<Analysis />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <AiAssistant />
