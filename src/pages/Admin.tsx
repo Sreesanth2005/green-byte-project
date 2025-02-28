@@ -1,755 +1,808 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Users, ShoppingBag, CreditCard, Bell, Settings, LogOut, User, BarChart, PieChart, LineChart, ArrowUpRight, ArrowDownRight, Download, Trash, Edit, Eye, Plus, HelpCircle } from "lucide-react";
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "@/components/ui/use-toast";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { PickupRequest, Product, Transaction, User, getPickupRequests, getProducts, getTransactions, getUsers, supabase } from "@/lib/supabase";
+import { Download, Edit, Filter, MoreHorizontal, Plus, RefreshCcw, Search, Settings, Trash2, Users } from "lucide-react";
 
 const Admin = () => {
-  const [selectedTab, setSelectedTab] = useState("dashboard");
-  
-  // Sample data for charts
-  const userActivityData = [
-    { name: 'Jan', active: 400, new: 240 },
-    { name: 'Feb', active: 450, new: 210 },
-    { name: 'Mar', active: 520, new: 280 },
-    { name: 'Apr', active: 590, new: 250 },
-    { name: 'May', active: 620, new: 310 },
-    { name: 'Jun', active: 700, new: 360 },
-  ];
-  
-  const recyclingData = [
-    { name: 'Jan', amount: 1200 },
-    { name: 'Feb', amount: 1400 },
-    { name: 'Mar', amount: 1800 },
-    { name: 'Apr', amount: 2200 },
-    { name: 'May', amount: 2600 },
-    { name: 'Jun', amount: 3100 },
-  ];
-  
-  const deviceTypeData = [
-    { name: 'Mobile Phones', value: 35 },
-    { name: 'Computers', value: 25 },
-    { name: 'TVs & Monitors', value: 15 },
-    { name: 'Household Appliances', value: 20 },
-    { name: 'Other', value: 5 },
-  ];
-  
-  const COLORS = ['#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800'];
-  
-  // Sample data for tables
-  const recentUsers = [
-    { id: 1, name: 'John Smith', email: 'john.smith@example.com', joined: '2024-06-10', status: 'active' },
-    { id: 2, name: 'Priya Mehta', email: 'priya.m@example.com', joined: '2024-06-08', status: 'active' },
-    { id: 3, name: 'David Chen', email: 'david.c@example.com', joined: '2024-06-07', status: 'pending' },
-    { id: 4, name: 'Sarah Johnson', email: 'sarah.j@example.com', joined: '2024-06-05', status: 'active' },
-    { id: 5, name: 'Rahul Sharma', email: 'rahul.s@example.com', joined: '2024-06-03', status: 'inactive' },
-  ];
-  
-  const recentPickups = [
-    { id: 'PK-12345', user: 'John Smith', items: ['Laptop', 'Mobile Phone'], date: '2024-06-10', status: 'completed', credits: 250 },
-    { id: 'PK-12344', user: 'Priya Mehta', items: ['TV', 'Computer'], date: '2024-06-08', status: 'scheduled', credits: 350 },
-    { id: 'PK-12343', user: 'Sarah Johnson', items: ['Refrigerator'], date: '2024-06-07', status: 'in-progress', credits: 400 },
-    { id: 'PK-12342', user: 'David Chen', items: ['Tablet', 'Printer', 'Keyboard'], date: '2024-06-05', status: 'completed', credits: 180 },
-    { id: 'PK-12341', user: 'Rahul Sharma', items: ['Mobile Phone'], date: '2024-06-03', status: 'completed', credits: 50 },
-  ];
-  
-  const recentTransactions = [
-    { id: 'TX-12345', user: 'John Smith', type: 'credit', amount: 250, date: '2024-06-10', description: 'Recycling reward' },
-    { id: 'TX-12344', user: 'Priya Mehta', type: 'debit', amount: 120, date: '2024-06-08', description: 'Marketplace purchase' },
-    { id: 'TX-12343', user: 'Sarah Johnson', type: 'credit', amount: 500, date: '2024-06-07', description: 'Money conversion' },
-    { id: 'TX-12342', user: 'David Chen', type: 'credit', amount: 180, date: '2024-06-05', description: 'Recycling reward' },
-    { id: 'TX-12341', user: 'Rahul Sharma', type: 'debit', amount: 240, date: '2024-06-03', description: 'Marketplace purchase' },
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [pickups, setPickups] = useState<PickupRequest[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        // In a real app, you would check if the current user has admin privileges
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to access the admin panel",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+
+        // Just for demo - in real app, you'd check admin role in database
+        setIsAdmin(true);
+        
+        // Fetch data
+        await fetchAllData();
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access this page",
+          variant: "destructive",
+        });
+        navigate("/");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [navigate]);
+
+  const fetchAllData = async () => {
+    setIsLoading(true);
+    try {
+      const [fetchedUsers, fetchedProducts, fetchedPickups, fetchedTransactions] = await Promise.all([
+        getUsers(),
+        getProducts(),
+        getPickupRequests(),
+        getTransactions()
+      ]);
+
+      setUsers(fetchedUsers);
+      setProducts(fetchedProducts);
+      setPickups(fetchedPickups);
+      setTransactions(fetchedTransactions);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    await fetchAllData();
+    toast({
+      title: "Refreshed",
+      description: "Data has been refreshed",
+    });
+  };
+
+  // For demo purposes - these would be actual database operations in production
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      setUsers(users.filter(user => user.id !== userId));
+      toast({
+        title: "User Deleted",
+        description: "User has been removed from the system",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateProduct = async (productId: string) => {
+    // In a real app, this would open a form to edit the product
+    toast({
+      title: "Edit Product",
+      description: `Editing product ${productId}`,
+    });
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      setProducts(products.filter(product => product.id !== productId));
+      toast({
+        title: "Product Deleted",
+        description: "Product has been removed from the system",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdatePickupStatus = async (pickupId: string, status: 'pending' | 'scheduled' | 'completed' | 'cancelled') => {
+    try {
+      setPickups(pickups.map(pickup => 
+        pickup.id === pickupId ? { ...pickup, status } : pickup
+      ));
+      toast({
+        title: "Status Updated",
+        description: `Pickup status changed to ${status}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update pickup status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Chart data
+  const userGrowthData = [
+    { name: 'Jan', users: 120 },
+    { name: 'Feb', users: 145 },
+    { name: 'Mar', users: 162 },
+    { name: 'Apr', users: 190 },
+    { name: 'May', users: 210 },
+    { name: 'Jun', users: 252 },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white h-screen fixed left-0 top-0 border-r">
-        <div className="p-6 border-b">
-          <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/24b8d545-2e4e-42c1-9d48-3e0dd4888244.png" 
-              alt="Green Byte Logo" 
-              className="w-10 h-10 mr-3"
-            />
-            <div>
-              <h1 className="font-bold text-xl text-primary">Green Byte</h1>
-              <p className="text-xs text-gray-600">Admin Panel</p>
-            </div>
-          </div>
+  const eWasteCollectionData = [
+    { name: 'Jan', amount: 1200 },
+    { name: 'Feb', amount: 1350 },
+    { name: 'Mar', amount: 1450 },
+    { name: 'Apr', amount: 1700 },
+    { name: 'May', amount: 1850 },
+    { name: 'Jun', amount: 2100 },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading admin panel...</p>
         </div>
-        
-        <nav className="p-4">
-          <ul className="space-y-1">
-            <li>
-              <button 
-                onClick={() => setSelectedTab("dashboard")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "dashboard" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <BarChart className="w-5 h-5 mr-3" />
-                Dashboard
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("users")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "users" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <Users className="w-5 h-5 mr-3" />
-                Users
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("pickups")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "pickups" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <ShoppingBag className="w-5 h-5 mr-3" />
-                Pickups
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("transactions")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "transactions" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <CreditCard className="w-5 h-5 mr-3" />
-                Transactions
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("reports")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "reports" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <LineChart className="w-5 h-5 mr-3" />
-                Reports
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("notifications")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "notifications" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <Bell className="w-5 h-5 mr-3" />
-                Notifications
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => setSelectedTab("settings")}
-                className={`w-full flex items-center p-3 rounded-lg text-left ${
-                  selectedTab === "settings" 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
-              >
-                <Settings className="w-5 h-5 mr-3" />
-                Settings
-              </button>
-            </li>
-          </ul>
-          
-          <div className="pt-8 mt-8 border-t">
-            <div className="flex items-center p-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                <User className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Admin User</p>
-                <p className="text-xs text-gray-600">admin@greenbyte.com</p>
-              </div>
-            </div>
-            <button className="mt-4 w-full flex items-center p-3 rounded-lg text-left text-red-600 hover:bg-red-50">
-              <LogOut className="w-5 h-5 mr-3" />
-              Sign Out
-            </button>
-          </div>
-        </nav>
       </div>
-      
-      {/* Main Content */}
-      <div className="ml-64 flex-1 p-8">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-8 flex justify-between items-center">
-          <h1 className="text-xl font-semibold">
-            {selectedTab === "dashboard" && "Dashboard"}
-            {selectedTab === "users" && "User Management"}
-            {selectedTab === "pickups" && "Pickup Management"}
-            {selectedTab === "transactions" && "Transaction Management"}
-            {selectedTab === "reports" && "Reports & Analytics"}
-            {selectedTab === "notifications" && "Notification Management"}
-            {selectedTab === "settings" && "System Settings"}
-          </h1>
-          <div className="flex items-center gap-4">
-            <button className="relative">
-              <Bell className="w-5 h-5 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
-              </span>
-            </button>
-            <button className="relative">
-              <HelpCircle className="w-5 h-5 text-gray-700" />
-            </button>
-            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-primary" />
-            </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+          <p className="mb-6">You don't have permission to access the admin panel.</p>
+          <Button onClick={() => navigate("/")}>Return to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="flex bg-white border-b shadow-sm px-6 py-3">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Settings className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold">Green Byte Admin</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={refreshData}>
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="default" size="sm" onClick={() => navigate("/")}>
+              Exit Admin
+            </Button>
           </div>
         </div>
-        
-        {/* Dashboard */}
-        {selectedTab === "dashboard" && (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Total Users</h3>
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Users className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">15,248</p>
-                    <div className="flex items-center mt-1 text-sm">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500 font-medium">12%</span>
-                      <span className="text-gray-500 ml-1">from last month</span>
-                    </div>
-                  </div>
-                  <div className="h-10 w-20 bg-gray-100 rounded"></div>
-                </div>
-              </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">
+        <Tabs defaultValue="dashboard">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="pickups">Pickup Requests</TabsTrigger>
+            <TabsTrigger value="payments">Payments & Transactions</TabsTrigger>
+          </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle>Total Users</CardTitle>
+                  <CardDescription>Active platform users</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{users.length}</div>
+                  <p className="text-sm text-muted-foreground mt-2">+12% from last month</p>
+                </CardContent>
+              </Card>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Total Pickups</h3>
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <ShoppingBag className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">8,547</p>
-                    <div className="flex items-center mt-1 text-sm">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500 font-medium">8%</span>
-                      <span className="text-gray-500 ml-1">from last month</span>
-                    </div>
-                  </div>
-                  <div className="h-10 w-20 bg-gray-100 rounded"></div>
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle>E-Waste Collected</CardTitle>
+                  <CardDescription>Total collected in kg</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">24,850</div>
+                  <p className="text-sm text-muted-foreground mt-2">+8% from last month</p>
+                </CardContent>
+              </Card>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">E-Waste Collected</h3>
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Recycle className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">24,850 kg</p>
-                    <div className="flex items-center mt-1 text-sm">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500 font-medium">15%</span>
-                      <span className="text-gray-500 ml-1">from last month</span>
-                    </div>
-                  </div>
-                  <div className="h-10 w-20 bg-gray-100 rounded"></div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Total Credits</h3>
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <CreditCard className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">1.2M</p>
-                    <div className="flex items-center mt-1 text-sm">
-                      <ArrowDownRight className="w-4 h-4 text-red-500 mr-1" />
-                      <span className="text-red-500 font-medium">3%</span>
-                      <span className="text-gray-500 ml-1">from last month</span>
-                    </div>
-                  </div>
-                  <div className="h-10 w-20 bg-gray-100 rounded"></div>
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle>Revenue</CardTitle>
+                  <CardDescription>Last 30 days</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">₹128,350</div>
+                  <p className="text-sm text-muted-foreground mt-2">+15% from last month</p>
+                </CardContent>
+              </Card>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-medium">User Activity</h3>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                </div>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart
-                      data={userActivityData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="active" name="Active Users" fill="#4CAF50" />
-                      <Bar dataKey="new" name="New Users" fill="#8BC34A" />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Growth</CardTitle>
+                  <CardDescription>New users over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={userGrowthData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="users" fill="#4CAF50" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-medium">Monthly Recycling</h3>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                </div>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart
-                      data={recyclingData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`${value} kg`, 'E-Waste']} />
-                      <Legend />
-                      <Line type="monotone" dataKey="amount" name="E-Waste (kg)" stroke="#4CAF50" activeDot={{ r: 8 }} />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>E-Waste Collection</CardTitle>
+                  <CardDescription>Monthly collection in kg</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={eWasteCollectionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="amount" fill="#8BC34A" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="font-medium mb-6">Device Types Collected</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={deviceTypeData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {deviceTypeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-medium">Recent Users</h3>
-                  <Button variant="outline" size="sm">View All</Button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {recentUsers.map((user) => (
-                        <tr key={user.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                                <User className="w-4 h-4 text-primary" />
-                              </div>
-                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {user.email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {user.joined}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              user.status === 'active' ? 'bg-green-100 text-green-800' :
-                              user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {user.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Users Tab */}
-        {selectedTab === "users" && (
-          <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div className="relative flex-grow max-w-md">
-                <Input placeholder="Search users..." className="pl-10" />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="flex items-center">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-                <Button className="flex items-center">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add User
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Joined Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentUsers.map((user) => (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                              <User className="w-5 h-5 text-primary" />
-                            </div>
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.joined}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' :
-                            user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50">
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="px-6 py-4 bg-white border-t flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">15,248</span> users
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Pickups Tab */}
-        {selectedTab === "pickups" && (
-          <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div className="relative flex-grow max-w-md">
-                <Input placeholder="Search pickups..." className="pl-10" />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="flex items-center">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-                <Button className="flex items-center">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Pickup
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Pickup ID
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Items
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Credits
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentPickups.map((pickup) => (
-                      <tr key={pickup.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                          {pickup.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {pickup.user}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {pickup.items.join(', ')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {pickup.date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Pickups</CardTitle>
+                  <CardDescription>Last 5 pickup requests</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {pickups.slice(0, 5).map((pickup) => (
+                      <div key={pickup.id} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{pickup.address.substring(0, 20)}...</p>
+                          <p className="text-sm text-gray-500">{new Date(pickup.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <Badge
+                          className={
                             pickup.status === 'completed' ? 'bg-green-100 text-green-800' :
                             pickup.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            pickup.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                             'bg-yellow-100 text-yellow-800'
-                          }`}>
+                          }
+                        >
+                          {pickup.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Products</CardTitle>
+                  <CardDescription>Most viewed marketplace items</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {products.slice(0, 5).map((product) => (
+                      <div key={product.id} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-gray-500">{product.eco_credits_price} credits</p>
+                        </div>
+                        <Badge variant="outline">Stock: {product.stock}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Transactions</CardTitle>
+                  <CardDescription>Last 5 transactions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {transactions.slice(0, 5).map((transaction) => (
+                      <div key={transaction.id} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{transaction.description.substring(0, 20)}...</p>
+                          <p className="text-sm text-gray-500">{new Date(transaction.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <span className={`font-medium ${
+                          transaction.type === 'earned' || transaction.type === 'converted_to_credits' 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          {transaction.type === 'earned' || transaction.type === 'converted_to_credits' 
+                            ? '+' 
+                            : '-'}{transaction.amount}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>Manage platform users and their permissions</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add User
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="Search users..."
+                      className="pl-8"
+                    />
+                  </div>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="border rounded-md">
+                  <div className="grid grid-cols-12 gap-2 p-4 bg-gray-50 font-medium border-b">
+                    <div className="col-span-1">ID</div>
+                    <div className="col-span-3">User</div>
+                    <div className="col-span-2">Role</div>
+                    <div className="col-span-2">Credits</div>
+                    <div className="col-span-2">Joined</div>
+                    <div className="col-span-2 text-right">Actions</div>
+                  </div>
+                  
+                  <div className="divide-y">
+                    {users.map((user) => (
+                      <div key={user.id} className="grid grid-cols-12 gap-2 p-4 items-center">
+                        <div className="col-span-1 text-gray-500">{user.id.substring(0, 6)}...</div>
+                        <div className="col-span-3 flex items-center space-x-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.full_name}`} />
+                            <AvatarFallback>{user.full_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{user.full_name}</p>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                            {user.role}
+                          </Badge>
+                        </div>
+                        <div className="col-span-2">{user.eco_credits}</div>
+                        <div className="col-span-2">{new Date(user.created_at).toLocaleDateString()}</div>
+                        <div className="col-span-2 flex justify-end space-x-1">
+                          <Button variant="ghost" size="icon">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-4">
+                  <p className="text-sm text-gray-500">Showing {users.length} users</p>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" disabled>Previous</Button>
+                    <Button variant="outline" size="sm">Next</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Products Tab */}
+          <TabsContent value="products">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Product Management</CardTitle>
+                    <CardDescription>Manage marketplace products</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="relative mb-4">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Search products..."
+                    className="pl-8"
+                  />
+                </div>
+
+                <div className="border rounded-md">
+                  <div className="grid grid-cols-12 gap-2 p-4 bg-gray-50 font-medium border-b">
+                    <div className="col-span-4">Product</div>
+                    <div className="col-span-2">Category</div>
+                    <div className="col-span-1">Stock</div>
+                    <div className="col-span-2">Price</div>
+                    <div className="col-span-1">Status</div>
+                    <div className="col-span-2 text-right">Actions</div>
+                  </div>
+                  
+                  <div className="divide-y">
+                    {products.map((product) => (
+                      <div key={product.id} className="grid grid-cols-12 gap-2 p-4 items-center">
+                        <div className="col-span-4 flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center">
+                            <img 
+                              src={product.images[0] || "/placeholder.svg"} 
+                              alt={product.name}
+                              className="h-8 w-8 object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-gray-500">{product.condition}</p>
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <Badge variant="outline">{product.category}</Badge>
+                        </div>
+                        <div className="col-span-1">{product.stock}</div>
+                        <div className="col-span-2">
+                          <div>₹{product.price}</div>
+                          <div className="text-sm text-gray-500">{product.eco_credits_price} credits</div>
+                        </div>
+                        <div className="col-span-1">
+                          <Badge variant={product.stock > 0 ? 'success' : 'destructive'}>
+                            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                          </Badge>
+                        </div>
+                        <div className="col-span-2 flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleUpdateProduct(product.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDeleteProduct(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-4">
+                  <p className="text-sm text-gray-500">Showing {products.length} products</p>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" disabled>Previous</Button>
+                    <Button variant="outline" size="sm">Next</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pickups Tab */}
+          <TabsContent value="pickups">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Pickup Requests</CardTitle>
+                    <CardDescription>Manage e-waste pickup requests</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Select defaultValue="all">
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-md">
+                  <div className="grid grid-cols-12 gap-2 p-4 bg-gray-50 font-medium border-b">
+                    <div className="col-span-1">ID</div>
+                    <div className="col-span-3">Address</div>
+                    <div className="col-span-2">Date</div>
+                    <div className="col-span-2">Items</div>
+                    <div className="col-span-1">Credits</div>
+                    <div className="col-span-1">Status</div>
+                    <div className="col-span-2 text-right">Actions</div>
+                  </div>
+                  
+                  <div className="divide-y">
+                    {pickups.map((pickup) => (
+                      <div key={pickup.id} className="grid grid-cols-12 gap-2 p-4 items-center">
+                        <div className="col-span-1 text-gray-500">{pickup.id.substring(0, 6)}...</div>
+                        <div className="col-span-3">
+                          <p className="font-medium">{pickup.address.substring(0, 30)}...</p>
+                          <p className="text-sm text-gray-500">User: {pickup.user_id.substring(0, 6)}...</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p>{new Date(pickup.pickup_date).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-500">{new Date(pickup.pickup_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p>{pickup.items.length} items</p>
+                          <p className="text-sm text-gray-500">{pickup.items[0]?.type}</p>
+                        </div>
+                        <div className="col-span-1">{pickup.estimated_credits}</div>
+                        <div className="col-span-1">
+                          <Badge
+                            className={
+                              pickup.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              pickup.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                              pickup.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }
+                          >
                             {pickup.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {pickup.credits}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50">
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="px-6 py-4 bg-white border-t flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">8,547</span> pickups
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Transactions Tab */}
-        {selectedTab === "transactions" && (
-          <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div className="relative flex-grow max-w-md">
-                <Input placeholder="Search transactions..." className="pl-10" />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="flex items-center">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-                <Button className="flex items-center">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Transaction ID
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Amount
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentTransactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                          {transaction.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {transaction.user}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            transaction.type === 'credit' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {transaction.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {transaction.amount} credits
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {transaction.date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {transaction.description}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
+                          </Badge>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="flex justify-end space-x-1">
+                            <Select 
+                              defaultValue={pickup.status}
+                              onValueChange={(value) => handleUpdatePickupStatus(
+                                pickup.id, 
+                                value as 'pending' | 'scheduled' | 'completed' | 'cancelled'
+                              )}
+                            >
+                              <SelectTrigger className="w-[130px]">
+                                <SelectValue placeholder="Change status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="scheduled">Scheduled</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="px-6 py-4 bg-white border-t flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">12,432</span> transactions
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
+
+                <div className="flex justify-between items-center mt-4">
+                  <p className="text-sm text-gray-500">Showing {pickups.length} pickup requests</p>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" disabled>Previous</Button>
+                    <Button variant="outline" size="sm">Next</Button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Payments Tab */}
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Payment Transactions</CardTitle>
+                    <CardDescription>Monitor all payment and credit transactions</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Select defaultValue="all">
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="earned">Earned Credits</SelectItem>
+                        <SelectItem value="spent">Spent Credits</SelectItem>
+                        <SelectItem value="converted_to_credits">Money to Credits</SelectItem>
+                        <SelectItem value="converted_to_money">Credits to Money</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-md">
+                  <div className="grid grid-cols-12 gap-2 p-4 bg-gray-50 font-medium border-b">
+                    <div className="col-span-1">ID</div>
+                    <div className="col-span-2">User</div>
+                    <div className="col-span-3">Description</div>
+                    <div className="col-span-2">Type</div>
+                    <div className="col-span-1">Amount</div>
+                    <div className="col-span-2">Date</div>
+                    <div className="col-span-1">Payment ID</div>
+                  </div>
+                  
+                  <div className="divide-y">
+                    {transactions.map((transaction) => (
+                      <div key={transaction.id} className="grid grid-cols-12 gap-2 p-4 items-center">
+                        <div className="col-span-1 text-gray-500">{transaction.id.substring(0, 6)}...</div>
+                        <div className="col-span-2 text-gray-500">{transaction.user_id.substring(0, 6)}...</div>
+                        <div className="col-span-3">{transaction.description}</div>
+                        <div className="col-span-2">
+                          <Badge
+                            variant={
+                              transaction.type === 'earned' || transaction.type === 'converted_to_credits'
+                                ? 'success'
+                                : 'secondary'
+                            }
+                          >
+                            {transaction.type.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+                        <div className="col-span-1">
+                          <span className={
+                            transaction.type === 'earned' || transaction.type === 'converted_to_credits'
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }>
+                            {transaction.type === 'earned' || transaction.type === 'converted_to_credits'
+                              ? '+'
+                              : '-'}{transaction.amount}
+                          </span>
+                        </div>
+                        <div className="col-span-2">
+                          {new Date(transaction.created_at).toLocaleString()}
+                        </div>
+                        <div className="col-span-1 text-gray-500">
+                          {transaction.payment_id
+                            ? transaction.payment_id.substring(0, 6) + '...'
+                            : '-'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-4">
+                  <p className="text-sm text-gray-500">Showing {transactions.length} transactions</p>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" disabled>Previous</Button>
+                    <Button variant="outline" size="sm">Next</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 };
 
 export default Admin;
-
-// Missing imports - add at the top
-import { Recycle } from "lucide-react";
