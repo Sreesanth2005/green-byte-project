@@ -1,6 +1,6 @@
 
 // Razorpay payment utilities
-import { supabase, Transaction } from './supabase';
+import { supabase, Transaction, createTransaction, incrementUserCredits, decrementUserCredits } from './supabase';
 
 // Types
 export type PaymentOptions = {
@@ -37,29 +37,15 @@ export const initializeRazorpay = (): Promise<boolean> => {
   });
 };
 
-// Create payment order
+// In a real production app, this would be handled on the server side
+// This is a simplified mock for development purposes
 export const createPaymentOrder = async (options: PaymentOptions): Promise<string> => {
   try {
-    // In a real implementation, this would be a secure server-side call
-    const response = await fetch('/api/create-payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount: options.amount * 100, // Convert to paise
-        currency: options.currency || 'INR',
-        notes: options.notes,
-      }),
-    });
+    // Mock order ID creation (in production, this would be a server API call)
+    const orderId = 'order_' + Math.random().toString(36).substring(2, 15);
     
-    const data = await response.json();
-    
-    if (!data.id) {
-      throw new Error('Failed to create payment order');
-    }
-    
-    return data.id;
+    console.log('Created mock order:', orderId);
+    return orderId;
   } catch (error) {
     console.error('Error creating payment order:', error);
     throw error;
@@ -82,7 +68,7 @@ export const processPayment = async (options: PaymentOptions): Promise<any> => {
   
   // Configure Razorpay options
   const rzpOptions = {
-    key: 'rzp_test_your_key_here', // Replace with your Razorpay key
+    key: 'rzp_test_aaKWH8yvrWE4yR', // Replace with your actual Razorpay test key
     amount: options.amount * 100, // in paise
     currency: options.currency || 'INR',
     name: options.name,
@@ -140,20 +126,23 @@ const saveTransaction = async ({
   description: string;
 }) => {
   try {
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: userId,
-        type: 'converted_to_credits',
-        amount: amount,
-        description: description,
-        payment_id: paymentId,
-        order_id: orderId,
-        created_at: new Date().toISOString(),
-      });
+    // Calculate credits (10 credits per rupee)
+    const credits = amount * 10;
     
-    if (error) throw error;
-    return data;
+    // Create transaction record
+    await createTransaction({
+      user_id: userId,
+      type: 'converted_to_credits',
+      amount: credits,
+      description,
+      payment_id: paymentId,
+      order_id: orderId,
+    });
+    
+    // Update user's eco-credits
+    await incrementUserCredits(userId, credits);
+    
+    return true;
   } catch (error) {
     console.error('Error saving transaction:', error);
     throw error;
@@ -166,10 +155,17 @@ export const convertToEcoCredits = async (
   rupees: number
 ): Promise<ConversionResponse> => {
   try {
+    if (rupees <= 0) {
+      return {
+        success: false,
+        error: 'Amount must be greater than zero',
+      };
+    }
+    
     // Conversion rate: 1 rupee = 10 eco-credits
     const credits = rupees * 10;
     
-    // Process payment first
+    // Process payment first (in a real app, this would wait for payment confirmation)
     await processPayment({
       amount: rupees,
       name: 'Green Byte',
@@ -180,16 +176,6 @@ export const convertToEcoCredits = async (
         credits: credits.toString(),
       },
     });
-    
-    // Update user's eco-credits in database
-    const { data, error } = await supabase
-      .from('users')
-      .update({ 
-        eco_credits: supabase.rpc('increment_credits', { amount: credits }) 
-      })
-      .eq('id', userId);
-    
-    if (error) throw error;
     
     return {
       success: true,
@@ -210,6 +196,13 @@ export const convertToMoney = async (
   credits: number
 ): Promise<ConversionResponse> => {
   try {
+    if (credits <= 0) {
+      return {
+        success: false,
+        error: 'Credits must be greater than zero',
+      };
+    }
+    
     // Conversion rate: 10 eco-credits = 1 rupee
     const rupees = credits / 10;
     
@@ -222,33 +215,23 @@ export const convertToMoney = async (
     
     if (userError) throw userError;
     
-    if (userData.eco_credits < credits) {
+    if (!userData || userData.eco_credits < credits) {
       return {
         success: false,
         error: 'Insufficient eco-credits',
       };
     }
     
-    // Update user's eco-credits in database
-    const { error } = await supabase
-      .from('users')
-      .update({ 
-        eco_credits: supabase.rpc('decrement_credits', { amount: credits }) 
-      })
-      .eq('id', userId);
-    
-    if (error) throw error;
+    // Decrease user's eco-credits
+    await decrementUserCredits(userId, credits);
     
     // Save transaction
-    await supabase
-      .from('transactions')
-      .insert({
-        user_id: userId,
-        type: 'converted_to_money',
-        amount: credits,
-        description: `Converted ${credits} EcoCredits to ₹${rupees}`,
-        created_at: new Date().toISOString(),
-      });
+    await createTransaction({
+      user_id: userId,
+      type: 'converted_to_money',
+      amount: credits,
+      description: `Converted ${credits} EcoCredits to ₹${rupees}`,
+    });
     
     // In a real app, this would trigger a bank transfer or payment to the user
     
@@ -258,6 +241,75 @@ export const convertToMoney = async (
     };
   } catch (error) {
     console.error('Error converting to money:', error);
+    return {
+      success: false,
+      error: (error as Error).message,
+    };
+  }
+};
+
+// Purchase product with eco-credits
+export const purchaseWithEcoCredits = async (
+  userId: string,
+  productId: string,
+  productName: string,
+  creditCost: number
+): Promise<ConversionResponse> => {
+  try {
+    // First check if user has enough credits
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('eco_credits')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) throw userError;
+    
+    if (!userData || userData.eco_credits < creditCost) {
+      return {
+        success: false,
+        error: 'Insufficient eco-credits',
+      };
+    }
+    
+    // Get current product stock
+    const { data: productData, error: productError } = await supabase
+      .from('products')
+      .select('stock')
+      .eq('id', productId)
+      .single();
+    
+    if (productError) throw productError;
+    
+    if (!productData || productData.stock < 1) {
+      return {
+        success: false,
+        error: 'Product out of stock',
+      };
+    }
+    
+    // Decrease user's eco-credits
+    await decrementUserCredits(userId, creditCost);
+    
+    // Update product stock
+    await supabase
+      .from('products')
+      .update({ stock: productData.stock - 1 })
+      .eq('id', productId);
+    
+    // Save transaction
+    await createTransaction({
+      user_id: userId,
+      type: 'spent',
+      amount: creditCost,
+      description: `Purchased ${productName}`,
+    });
+    
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error purchasing with eco-credits:', error);
     return {
       success: false,
       error: (error as Error).message,
