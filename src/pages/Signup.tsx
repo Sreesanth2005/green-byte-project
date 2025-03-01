@@ -7,8 +7,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabaseClient";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -23,6 +23,7 @@ const Signup = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -75,51 +76,23 @@ const Signup = () => {
     try {
       setLoading(true);
       
-      // Sign up user with Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-          }
+      const { error } = await signUp(
+        formData.email, 
+        formData.password, 
+        { 
+          firstName: formData.firstName, 
+          lastName: formData.lastName 
         }
-      });
+      );
       
       if (error) throw error;
       
-      // Create profile record
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              first_name: formData.firstName,
-              last_name: formData.lastName,
-              email: formData.email,
-            }
-          ]);
-          
-        if (profileError) throw profileError;
-      }
-      
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account.",
-      });
-      
-      // Navigate to login page
+      // Navigate to login page (toast is handled in auth context)
       navigate("/login");
       
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast({
-        title: "Signup failed",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
+      // Toast handling is done in auth context
     } finally {
       setLoading(false);
     }

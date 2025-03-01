@@ -7,8 +7,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabaseClient";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +18,7 @@ const Login = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,27 +35,16 @@ const Login = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await signIn(email, password);
       
       if (error) throw error;
       
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Green Byte!",
-      });
-      
+      // If successful, navigation happens in the auth context
       navigate("/");
       
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      // Toast is handled in the auth context
     } finally {
       setLoading(false);
     }
