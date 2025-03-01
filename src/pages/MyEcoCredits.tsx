@@ -1,46 +1,113 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Coins, TrendingUp, Recycle, Award, ArrowRight, ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MyEcoCredits = () => {
   const [rupeeAmount, setRupeeAmount] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [convertionType, setConvertionType] = useState<"toCredits" | "toRupees">("toCredits");
+  const [totalCredits, setTotalCredits] = useState(0);
+  const [monthlyEarned, setMonthlyEarned] = useState(0);
+  const [itemsRecycled, setItemsRecycled] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState("Bronze");
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const transactions = [
-    {
-      id: 1,
-      type: "Earned",
-      amount: 50,
-      description: "Recycled Laptop",
-      date: "2024-03-01",
-    },
-    {
-      id: 2,
-      type: "Spent",
-      amount: 20,
-      description: "Marketplace Purchase",
-      date: "2024-02-28",
-    },
-    {
-      id: 3,
-      type: "Added",
-      amount: 100,
-      description: "Rupees Conversion (₹10)",
-      date: "2024-02-25",
-    },
-    {
-      id: 4,
-      type: "Withdrawn",
-      amount: 50,
-      description: "Converted to Rupees (₹5)",
-      date: "2024-02-20",
-    },
-  ];
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to view your EcoCredits.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    fetchUserData();
+    fetchTransactions();
+  }, [user]);
+
+  const fetchUserData = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      
+      if (profile) {
+        setTotalCredits(profile.eco_credits || 0);
+        setCurrentLevel(profile.level || "Bronze");
+      }
+      
+      // Count recycled items
+      const { count: recycledCount, error: recycledError } = await supabase
+        .from('schedule_pickups')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+        
+      if (recycledError) throw recycledError;
+      
+      setItemsRecycled(recycledCount || 0);
+      
+      // Calculate monthly earned
+      const firstDayOfMonth = new Date();
+      firstDayOfMonth.setDate(1);
+      firstDayOfMonth.setHours(0, 0, 0, 0);
+      
+      const { data: monthlyData, error: monthlyError } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('type', 'Earned')
+        .gte('created_at', firstDayOfMonth.toISOString());
+        
+      if (monthlyError) throw monthlyError;
+      
+      const monthlyTotal = monthlyData?.reduce((sum, transaction) => sum + transaction.amount, 0) || 0;
+      setMonthlyEarned(monthlyTotal);
+      
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      
+      setTransactions(data || []);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    }
+  };
 
   const handleRupeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -56,16 +123,115 @@ const MyEcoCredits = () => {
     setRupeeAmount(value ? (parseInt(value) / 10).toString() : "");
   };
 
-  const handleConvert = () => {
-    // This would handle the actual conversion in a real app
-    console.log(convertionType === "toCredits" 
-      ? `Converting ₹${rupeeAmount} to ${creditAmount} EcoCredits` 
-      : `Converting ${creditAmount} EcoCredits to ₹${rupeeAmount}`
-    );
+  const handleConvert = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to convert currency.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
     
-    // Reset form
-    setRupeeAmount("");
-    setCreditAmount("");
+    if (!rupeeAmount || !creditAmount) {
+      toast({
+        title: "Amount required",
+        description: "Please enter an amount to convert.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const credits = parseInt(creditAmount);
+    
+    try {
+      setLoading(true);
+      
+      if (convertionType === "toCredits") {
+        // Add credits to user's account
+        const { error: updateError } = await supabase.rpc('add_eco_credits', {
+          user_id: user.id,
+          amount: credits
+        });
+        
+        if (updateError) throw updateError;
+        
+        // Create transaction record
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert([
+            {
+              user_id: user.id,
+              type: 'Added',
+              amount: credits,
+              description: `Rupees Conversion (₹${rupeeAmount})`
+            }
+          ]);
+          
+        if (transactionError) throw transactionError;
+        
+        toast({
+          title: "Conversion successful",
+          description: `You've converted ₹${rupeeAmount} to ${creditAmount} EcoCredits`,
+        });
+      } else {
+        // Check if user has enough credits
+        if (credits > totalCredits) {
+          toast({
+            title: "Insufficient credits",
+            description: "You don't have enough EcoCredits for this conversion.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Remove credits from user's account
+        const { error: updateError } = await supabase.rpc('add_eco_credits', {
+          user_id: user.id,
+          amount: -credits
+        });
+        
+        if (updateError) throw updateError;
+        
+        // Create transaction record
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert([
+            {
+              user_id: user.id,
+              type: 'Withdrawn',
+              amount: credits,
+              description: `Converted to Rupees (₹${rupeeAmount})`
+            }
+          ]);
+          
+        if (transactionError) throw transactionError;
+        
+        toast({
+          title: "Conversion successful",
+          description: `You've converted ${creditAmount} EcoCredits to ₹${rupeeAmount}`,
+        });
+      }
+      
+      // Refresh data
+      fetchUserData();
+      fetchTransactions();
+      
+      // Reset form
+      setRupeeAmount("");
+      setCreditAmount("");
+      
+    } catch (error: any) {
+      console.error("Conversion error:", error);
+      toast({
+        title: "Conversion failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +247,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Total Credits</h3>
               <Coins className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">1,250</p>
+            <p className="text-3xl font-bold">{totalCredits}</p>
             <p className="text-sm text-gray-600">Available to spend</p>
           </div>
           
@@ -90,7 +256,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Monthly Earned</h3>
               <TrendingUp className="w-6 h-6 text-success" />
             </div>
-            <p className="text-3xl font-bold">320</p>
+            <p className="text-3xl font-bold">{monthlyEarned}</p>
             <p className="text-sm text-gray-600">This month</p>
           </div>
           
@@ -99,7 +265,7 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Items Recycled</h3>
               <Recycle className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">15</p>
+            <p className="text-3xl font-bold">{itemsRecycled}</p>
             <p className="text-sm text-gray-600">Total items</p>
           </div>
           
@@ -108,8 +274,12 @@ const MyEcoCredits = () => {
               <h3 className="font-semibold">Current Level</h3>
               <Award className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold">Gold</p>
-            <p className="text-sm text-gray-600">250 to next level</p>
+            <p className="text-3xl font-bold">{currentLevel}</p>
+            <p className="text-sm text-gray-600">
+              {currentLevel === "Bronze" ? "250 to next level" : 
+               currentLevel === "Silver" ? "500 to next level" : 
+               currentLevel === "Gold" ? "1000 to next level" : "Max level"}
+            </p>
           </div>
         </div>
 
@@ -159,8 +329,8 @@ const MyEcoCredits = () => {
               </div>
               
               <div className="md:pt-6">
-                <Button onClick={handleConvert} className="whitespace-nowrap">
-                  Convert Now
+                <Button onClick={handleConvert} className="whitespace-nowrap" disabled={loading}>
+                  {loading ? "Converting..." : "Convert Now"}
                 </Button>
               </div>
             </div>
@@ -182,23 +352,31 @@ const MyEcoCredits = () => {
             <h2 className="text-xl font-semibold">Transaction History</h2>
           </div>
           <div className="divide-y">
-            {transactions.map((transaction) => (
-              <div key={transaction.id} className="p-6 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{transaction.description}</p>
-                  <p className="text-sm text-gray-600">{transaction.date}</p>
+            {transactions.length > 0 ? (
+              transactions.map((transaction) => (
+                <div key={transaction.id} className="p-6 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{transaction.description}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(transaction.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className={`text-lg font-semibold ${
+                    transaction.type === 'Earned' || transaction.type === 'Added' 
+                      ? 'text-success' 
+                      : 'text-destructive'
+                  }`}>
+                    {transaction.type === 'Earned' || transaction.type === 'Added' 
+                      ? '+' 
+                      : '-'}{transaction.amount} credits
+                  </div>
                 </div>
-                <div className={`text-lg font-semibold ${
-                  transaction.type === 'Earned' || transaction.type === 'Added' 
-                    ? 'text-success' 
-                    : 'text-destructive'
-                }`}>
-                  {transaction.type === 'Earned' || transaction.type === 'Added' 
-                    ? '+' 
-                    : '-'}{transaction.amount} credits
-                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                No transactions found. Start recycling or convert currency to see your history.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </main>

@@ -5,176 +5,94 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowLeft, Share2, ShoppingCart, Heart } from "lucide-react";
-
-// This would normally come from an API or database
-const products = [
-  {
-    id: 1,
-    name: "Refurbished iPhone 12",
-    price: 499,
-    ecoCredits: 4990,
-    rating: 4.5,
-    reviews: 128,
-    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
-    category: "phones",
-    description: "This refurbished iPhone 12 has been fully tested and restored to factory settings. It comes with a 1-year warranty and all original accessories.",
-    specs: [
-      "128GB Storage",
-      "6.1-inch Super Retina XDR display",
-      "A14 Bionic chip",
-      "Dual 12MP camera system",
-      "Face ID"
-    ],
-    condition: "Excellent - Like new with minimal signs of use"
-  },
-  {
-    id: 2,
-    name: "Dell XPS 13 Laptop",
-    price: 899,
-    ecoCredits: 8990,
-    rating: 4.8,
-    reviews: 256,
-    image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400&h=300&fit=crop",
-    category: "laptops",
-    description: "The Dell XPS 13 is a premium ultrabook with InfinityEdge display and powerful performance in a compact design. This refurbished model has been thoroughly tested and comes with our quality guarantee.",
-    specs: [
-      "Intel Core i7 processor",
-      "16GB RAM",
-      "512GB SSD",
-      "13.4-inch FHD+ display",
-      "Windows 11 Pro"
-    ],
-    condition: "Very Good - Minor cosmetic imperfections that don't affect performance"
-  },
-  {
-    id: 3,
-    name: "iPad Air (2020)",
-    price: 449,
-    ecoCredits: 4490,
-    rating: 4.7,
-    reviews: 189,
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=300&fit=crop",
-    category: "tablets",
-    description: "The iPad Air features a stunning Liquid Retina display and Apple's powerful A14 Bionic chip. This refurbished model has been thoroughly tested and is in excellent condition.",
-    specs: [
-      "64GB Storage",
-      "10.9-inch Liquid Retina display",
-      "A14 Bionic chip",
-      "12MP rear camera, 7MP front camera",
-      "Touch ID"
-    ],
-    condition: "Excellent - Like new with minimal signs of use"
-  },
-  {
-    id: 4,
-    name: "Sony WH-1000XM4 Headphones",
-    price: 249,
-    ecoCredits: 2490,
-    rating: 4.9,
-    reviews: 320,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
-    category: "audio",
-    description: "Industry-leading noise cancellation with premium sound quality. These refurbished Sony WH-1000XM4 headphones have been thoroughly tested and come with a 6-month warranty.",
-    specs: [
-      "Industry-leading noise cancellation",
-      "30-hour battery life",
-      "Touch controls",
-      "Speak-to-chat technology",
-      "Bluetooth 5.0"
-    ],
-    condition: "Very Good - Minor cosmetic imperfections that don't affect performance"
-  },
-  {
-    id: 5,
-    name: "Samsung Galaxy Watch",
-    price: 179,
-    ecoCredits: 1790,
-    rating: 4.6,
-    reviews: 142,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
-    category: "accessories",
-    description: "Track your fitness goals and stay connected with this refurbished Samsung Galaxy Watch. It has been thoroughly tested and is in excellent working condition.",
-    specs: [
-      "1.4-inch Super AMOLED display",
-      "5 ATM water resistance",
-      "Heart rate monitoring",
-      "GPS",
-      "NFC for Samsung Pay"
-    ],
-    condition: "Good - Visible signs of use but fully functional"
-  },
-  {
-    id: 6,
-    name: "Google Pixel 6",
-    price: 549,
-    ecoCredits: 5490,
-    rating: 4.4,
-    reviews: 98,
-    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&h=300&fit=crop",
-    category: "phones",
-    description: "Experience Google's best camera yet with the Pixel 6. This refurbished phone has been thoroughly tested and comes with a 1-year warranty.",
-    specs: [
-      "128GB Storage",
-      "6.4-inch OLED display",
-      "Google Tensor chip",
-      "50MP wide + 12MP ultrawide cameras",
-      "Android 12"
-    ],
-    condition: "Excellent - Like new with minimal signs of use"
-  },
-  {
-    id: 7,
-    name: "MacBook Pro M1",
-    price: 1199,
-    ecoCredits: 11990,
-    rating: 4.8,
-    reviews: 276,
-    image: "https://images.unsplash.com/photo-1537498425277-c283d32ef9db?w=400&h=300&fit=crop",
-    category: "laptops",
-    description: "The MacBook Pro with M1 chip delivers breakthrough performance. This refurbished model has been thoroughly tested and comes with our quality guarantee.",
-    specs: [
-      "Apple M1 chip with 8‑core CPU",
-      "8GB unified memory",
-      "256GB SSD storage",
-      "13-inch Retina display",
-      "macOS"
-    ],
-    condition: "Very Good - Minor cosmetic imperfections that don't affect performance"
-  },
-  {
-    id: 8,
-    name: "Wireless Earbuds",
-    price: 79,
-    ecoCredits: 790,
-    rating: 4.3,
-    reviews: 105,
-    image: "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f37?w=400&h=300&fit=crop",
-    category: "audio",
-    description: "These refurbished wireless earbuds offer premium sound quality and comfortable fit. They have been thoroughly tested and come with a 3-month warranty.",
-    specs: [
-      "True wireless design",
-      "5-hour battery life (20 hours with case)",
-      "Water resistant",
-      "Touch controls",
-      "Built-in microphone for calls"
-    ],
-    condition: "Good - Visible signs of use but fully functional"
-  }
-];
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
+  
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Find the product with the matching ID
-    const foundProduct = products.find(p => p.id === Number(id));
-    if (foundProduct) {
-      setProduct(foundProduct);
+    if (id) {
+      fetchProduct(id);
     }
-    // In a real app, you might fetch from an API here
   }, [id]);
+
+  const fetchProduct = async (productId: string) => {
+    try {
+      setLoading(true);
+      
+      // Fetch the product
+      const { data, error } = await supabase
+        .from('marketplace_items')
+        .select('*')
+        .eq('id', productId)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data) {
+        setProduct(data);
+        
+        // Fetch related products
+        const { data: related, error: relatedError } = await supabase
+          .from('marketplace_items')
+          .select('*')
+          .eq('category', data.category)
+          .neq('id', productId)
+          .limit(4);
+          
+        if (relatedError) throw relatedError;
+        
+        setRelatedProducts(related || []);
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      toast({
+        title: "Failed to load product",
+        description: "Please try refreshing the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToCart = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to add items to your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Added to cart",
+      description: `${quantity} x ${product.name} added to your cart.`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-6 pt-24 pb-16 text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -206,7 +124,7 @@ const ProductDetails = () => {
             {/* Product Image */}
             <div className="flex items-center justify-center">
               <img
-                src={product.image}
+                src={product.image_url}
                 alt={product.name}
                 className="w-full h-auto max-h-[400px] object-contain rounded-lg"
               />
@@ -229,7 +147,7 @@ const ProductDetails = () => {
               
               <div className="pb-4 border-b">
                 <div className="text-3xl font-bold text-primary">
-                  {product.ecoCredits} Credits
+                  {product.eco_credits} Credits
                 </div>
                 <div className="text-gray-600 mt-1">(₹{product.price})</div>
               </div>
@@ -247,7 +165,7 @@ const ProductDetails = () => {
               <div className="space-y-4 pb-4 border-b">
                 <h3 className="font-semibold">Key Specifications</h3>
                 <ul className="list-disc pl-5 text-gray-600 space-y-1">
-                  {product.specs.map((spec: string, index: number) => (
+                  {product.specs && product.specs.map((spec: string, index: number) => (
                     <li key={index}>{spec}</li>
                   ))}
                 </ul>
@@ -270,7 +188,7 @@ const ProductDetails = () => {
                   </button>
                 </div>
                 
-                <Button className="flex-1" size="lg">
+                <Button className="flex-1" size="lg" onClick={addToCart}>
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Add to Cart
                 </Button>
@@ -374,18 +292,16 @@ const ProductDetails = () => {
         </div>
         
         {/* Related Products */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products
-              .filter(p => p.category === product.category && p.id !== product.id)
-              .slice(0, 4)
-              .map(relatedProduct => (
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map(relatedProduct => (
                 <div key={relatedProduct.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <Link to={`/product/${relatedProduct.id}`}>
                     <img
-                      src={relatedProduct.image}
+                      src={relatedProduct.image_url}
                       alt={relatedProduct.name}
                       className="w-full h-48 object-cover"
                     />
@@ -399,15 +315,16 @@ const ProductDetails = () => {
                         <span className="text-sm text-gray-600">({relatedProduct.reviews} reviews)</span>
                       </div>
                       <div>
-                        <span className="text-lg font-semibold">{relatedProduct.ecoCredits} Credits</span>
+                        <span className="text-lg font-semibold">{relatedProduct.eco_credits} Credits</span>
                         <p className="text-xs text-gray-500">(₹{relatedProduct.price})</p>
                       </div>
                     </div>
                   </Link>
                 </div>
               ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />

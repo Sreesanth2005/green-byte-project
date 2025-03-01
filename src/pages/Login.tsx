@@ -39,12 +39,21 @@ const Login = () => {
       
       if (error) throw error;
       
-      // If successful, navigation happens in the auth context
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Green Byte!",
+      });
+      
+      // Navigate to home page after successful login
       navigate("/");
       
     } catch (error: any) {
       console.error("Login error:", error);
-      // Toast is handled in the auth context
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
