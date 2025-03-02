@@ -9,7 +9,6 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { analyzeRecyclingImpact, getRandomEcoTips } from "@/lib/edgeFunctions";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabaseClient";
 
 // Define color scheme for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -18,118 +17,31 @@ const AnalysisPanel = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [statsLoading, setStatsLoading] = useState(true);
   const [analysis, setAnalysis] = useState<any>(null);
   const [ecoTips, setEcoTips] = useState<any[]>([]);
   const [timeFrame, setTimeFrame] = useState("month");
   const [category, setCategory] = useState("all");
-  const [categoryData, setCategoryData] = useState<any[]>([]);
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+
+  const categoryData = [
+    { name: "Electronics", value: 40 },
+    { name: "Plastic", value: 30 },
+    { name: "Paper", value: 15 },
+    { name: "Glass", value: 10 },
+    { name: "Metal", value: 5 },
+  ];
+
+  const monthlyData = [
+    { name: "Jan", credits: 150 },
+    { name: "Feb", credits: 200 },
+    { name: "Mar", credits: 180 },
+    { name: "Apr", credits: 270 },
+    { name: "May", credits: 310 },
+    { name: "Jun", credits: 290 },
+  ];
 
   useEffect(() => {
     fetchEcoTips();
-    fetchRecyclingStats();
-  }, [user]);
-
-  const fetchRecyclingStats = async () => {
-    setStatsLoading(true);
-    try {
-      // Fetch category breakdown
-      const { data: categoryStats, error: categoryError } = await supabase
-        .from('recycling_stats')
-        .select('category, amount')
-        .order('amount', { ascending: false });
-        
-      if (categoryError) throw categoryError;
-      
-      if (categoryStats && categoryStats.length > 0) {
-        // Process category data
-        const categoryTotals: Record<string, number> = {};
-        categoryStats.forEach((stat) => {
-          categoryTotals[stat.category] = (categoryTotals[stat.category] || 0) + stat.amount;
-        });
-        
-        const formattedCategoryData = Object.entries(categoryTotals).map(([name, value]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          value: Number(value)
-        }));
-        
-        setCategoryData(formattedCategoryData);
-      } else {
-        // Use default data if no data found
-        setCategoryData([
-          { name: "Electronics", value: 40 },
-          { name: "Plastic", value: 30 },
-          { name: "Paper", value: 15 },
-          { name: "Glass", value: 10 },
-          { name: "Metal", value: 5 },
-        ]);
-      }
-      
-      // Fetch monthly data (last 6 months)
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      
-      const { data: monthlyStats, error: monthlyError } = await supabase
-        .from('transactions')
-        .select('created_at, amount')
-        .eq('type', 'Earned')
-        .gte('created_at', sixMonthsAgo.toISOString())
-        .order('created_at', { ascending: true });
-        
-      if (monthlyError) throw monthlyError;
-      
-      if (monthlyStats && monthlyStats.length > 0) {
-        // Group by month
-        const monthlyTotals: Record<string, number> = {};
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        
-        monthlyStats.forEach((stat) => {
-          const date = new Date(stat.created_at);
-          const monthKey = monthNames[date.getMonth()];
-          monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + stat.amount;
-        });
-        
-        const formattedMonthlyData = Object.entries(monthlyTotals).map(([name, credits]) => ({
-          name,
-          credits
-        }));
-        
-        setMonthlyData(formattedMonthlyData);
-      } else {
-        // Use default data if no data found
-        setMonthlyData([
-          { name: "Jan", credits: 150 },
-          { name: "Feb", credits: 200 },
-          { name: "Mar", credits: 180 },
-          { name: "Apr", credits: 270 },
-          { name: "May", credits: 310 },
-          { name: "Jun", credits: 290 },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error fetching recycling stats:", error);
-      // Use default data on error
-      setCategoryData([
-        { name: "Electronics", value: 40 },
-        { name: "Plastic", value: 30 },
-        { name: "Paper", value: 15 },
-        { name: "Glass", value: 10 },
-        { name: "Metal", value: 5 },
-      ]);
-      
-      setMonthlyData([
-        { name: "Jan", credits: 150 },
-        { name: "Feb", credits: 200 },
-        { name: "Mar", credits: 180 },
-        { name: "Apr", credits: 270 },
-        { name: "May", credits: 310 },
-        { name: "Jun", credits: 290 },
-      ]);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
+  }, []);
 
   const fetchEcoTips = async () => {
     try {
@@ -246,56 +158,50 @@ const AnalysisPanel = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {statsLoading ? (
-            <div className="h-80 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <Tabs defaultValue="monthly">
-              <TabsList className="mb-4">
-                <TabsTrigger value="monthly">Monthly Activity</TabsTrigger>
-                <TabsTrigger value="categories">Categories</TabsTrigger>
-              </TabsList>
-              <TabsContent value="monthly">
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="credits" fill="#4ade80" name="Eco Credits Earned" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-              <TabsContent value="categories">
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
+          <Tabs defaultValue="monthly">
+            <TabsList className="mb-4">
+              <TabsTrigger value="monthly">Monthly Activity</TabsTrigger>
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+            </TabsList>
+            <TabsContent value="monthly">
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="credits" fill="#4ade80" name="Eco Credits Earned" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="categories">
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
