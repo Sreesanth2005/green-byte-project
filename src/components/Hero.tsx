@@ -15,11 +15,11 @@ const Hero = () => {
   };
 
   return (
-    <section className="pt-32 pb-24 bg-[url('/lovable-uploads/a56e1e7d-bd78-4746-8eaa-5ab17f91ae2e.png')] bg-cover bg-center relative">
+    <section className="pt-32 pb-24 bg-[url('/lovable-uploads/4d738902-b757-49a8-9fe8-1354783f4812.png')] bg-cover bg-center relative">
       <div className="absolute inset-0 bg-black/50"></div>
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center text-white">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-          Recycle Electronics, <span className="text-primary">Save the Planet</span>
+          Recycle Electronics, <span className="text-primary">Earn Rewards</span>
         </h1>
         <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8 text-gray-200">
           Join Green Byte in building a sustainable future by recycling your e-waste and earning EcoCredits.
