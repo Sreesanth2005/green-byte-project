@@ -9,3 +9,6 @@ verify_jwt = false
 
 [generate-eco-tips]
 verify_jwt = false
+
+[analyze-recycling-impact]
+verify_jwt = false

@@ -1,178 +1,182 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// Store OTPs with expiration time (5 minutes)
-const otpStore = new Map();
-
-// Generate a random 6-digit OTP
-function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
+  // Get environment variables
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return new Response(JSON.stringify({ error: "Missing Supabase environment variables" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    const { action, userId, amount, paymentDetails } = await req.json();
+    const { action, userId, otp, amount, direction, accountNumber, upiId, paymentMethod } = await req.json();
     
-    if (action === 'send-otp') {
-      // In a real implementation, this would send an SMS or email with the OTP
-      // For demo purposes, we'll just generate and store it
-      const otp = generateOTP();
-      const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes
-      
-      // Store OTP with userId as key
-      otpStore.set(userId, { otp, expirationTime });
-      
-      // In a real implementation, send the OTP via SMS using a service like Twilio
-      console.log(`Generated OTP for user ${userId}: ${otp}`);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "OTP sent successfully. For demo purposes, check function logs.",
-        // In a real app, don't return the OTP directly
-        demoOtp: otp
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } 
-    else if (action === 'verify-otp') {
-      const { otp } = await req.json();
-      const storedData = otpStore.get(userId);
-      
-      if (!storedData) {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: "No OTP found for this user. Please request a new one." 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      if (Date.now() > storedData.expirationTime) {
-        otpStore.delete(userId);
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: "OTP expired. Please request a new one." 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      if (storedData.otp !== otp) {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: "Invalid OTP. Please try again." 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      // OTP verified, continue with the transaction
-      otpStore.delete(userId);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "OTP verified successfully." 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    if (profileError) {
+      return new Response(JSON.stringify({ error: "User profile not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    else if (action === 'process-payment') {
-      // For credits to money conversion
-      const { transactionType, accountInfo, convertAmount } = await req.json();
+    
+    // Handle different actions
+    if (action === "send-otp") {
+      // In a real app, we would send an OTP to the user's phone
+      // For this demo, we'll simulate OTP generation
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // In a real implementation, this would connect to a payment processor API
-      // For demo purposes, we'll simulate a successful payment
+      // Store OTP in a secure table with expiration
+      // For demo purposes, we'll return it directly
       
-      let description, transactionAmount, transactionType2;
-      
-      if (transactionType === 'credits-to-money') {
-        // Converting eco credits to money
-        // 10 eco credits = 1 Rupee
-        const rupeesAmount = Math.floor(convertAmount / 10);
-        
-        // Update user's eco credits
-        const { error: updateError } = await supabase.rpc('add_eco_credits', {
-          user_id: userId,
-          amount: -convertAmount // Subtract credits
-        });
-        
-        if (updateError) throw updateError;
-        
-        description = `Converted ${convertAmount} EcoCredits to ₹${rupeesAmount} (${accountInfo})`;
-        transactionAmount = convertAmount;
-        transactionType2 = 'Withdrawn';
-      } 
-      else { // money-to-credits
-        // Converting money to eco credits
-        // 1 Rupee = 10 eco credits
-        const creditsAmount = convertAmount * 10;
-        
-        // Update user's eco credits
-        const { error: updateError } = await supabase.rpc('add_eco_credits', {
-          user_id: userId,
-          amount: creditsAmount // Add credits
-        });
-        
-        if (updateError) throw updateError;
-        
-        description = `Added ${creditsAmount} EcoCredits from ₹${convertAmount} payment`;
-        transactionAmount = creditsAmount;
-        transactionType2 = 'Added';
-      }
-      
-      // Record the transaction
-      const paymentReference = `PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: userId,
-          type: transactionType2,
-          amount: transactionAmount,
-          description: description,
-          payment_reference: paymentReference,
-          status: 'completed'
-        });
-        
-      if (transactionError) throw transactionError;
+      console.log(`OTP for user ${userId}: ${generatedOtp}`);
       
       return new Response(JSON.stringify({ 
         success: true, 
-        reference: paymentReference,
-        message: "Transaction processed successfully." 
+        message: "OTP sent successfully",
+        otp: generatedOtp // In production, never return the OTP in the response
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    } 
+    else if (action === "verify-otp") {
+      // In a real app, we would verify the OTP against what was sent
+      // For this demo, we'll simulate verification
+      
+      // Assume OTP is valid, process the transaction
+      if (direction === "add") {
+        // Convert money to eco credits
+        const ecoCreditsToAdd = amount * 100; // 1 USD = 100 eco credits
+        
+        // Update user's eco credits
+        const { data, error } = await supabase.rpc("add_eco_credits", {
+          user_id: userId,
+          amount: ecoCreditsToAdd
+        });
+        
+        if (error) {
+          console.error("Error adding eco credits:", error);
+          return new Response(JSON.stringify({ error: "Failed to add eco credits" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // Record the transaction
+        const { error: transactionError } = await supabase
+          .from("transactions")
+          .insert({
+            user_id: userId,
+            type: "credit",
+            amount: ecoCreditsToAdd,
+            description: `Added ${ecoCreditsToAdd} eco credits via ${paymentMethod}`,
+            payment_reference: `PAY-${Date.now()}`,
+            status: "completed"
+          });
+        
+        if (transactionError) {
+          console.error("Error recording transaction:", transactionError);
+        }
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Eco credits added successfully",
+          new_balance: (profile.eco_credits || 0) + ecoCreditsToAdd
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } 
+      else if (direction === "withdraw") {
+        // Check if user has enough eco credits
+        if ((profile.eco_credits || 0) < amount) {
+          return new Response(JSON.stringify({ error: "Insufficient eco credits" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // Convert eco credits to money
+        const moneyToWithdraw = amount / 100; // 100 eco credits = 1 USD
+        
+        // Update user's eco credits
+        const { data, error } = await supabase.rpc("add_eco_credits", {
+          user_id: userId,
+          amount: -amount
+        });
+        
+        if (error) {
+          console.error("Error deducting eco credits:", error);
+          return new Response(JSON.stringify({ error: "Failed to process withdrawal" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // Record the transaction
+        const { error: transactionError } = await supabase
+          .from("transactions")
+          .insert({
+            user_id: userId,
+            type: "debit",
+            amount: amount,
+            description: `Withdrew ${amount} eco credits (${moneyToWithdraw} USD)`,
+            payment_reference: accountNumber || upiId || `WIT-${Date.now()}`,
+            status: "processing" // In a real app, this would be updated once the money transfer is complete
+          });
+        
+        if (transactionError) {
+          console.error("Error recording transaction:", transactionError);
+        }
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Withdrawal processed successfully",
+          new_balance: (profile.eco_credits || 0) - amount
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
     
     return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error processing payment:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

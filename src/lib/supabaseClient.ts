@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://dqzzkycxafylvjghppst.supabase.co';
@@ -9,133 +8,48 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Database schema and table creation function
 export const initializeDatabase = async () => {
   try {
-    // Check if profiles table exists
+    // Check if profiles table exists and create it if it doesn't
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select('id')
       .limit(1);
     
-    // If table doesn't exist or there's an error indicating it doesn't exist, create it
-    if (profilesError || !profilesData) {
-      const { error } = await supabase.rpc('create_table_if_not_exists', {
-        table_name: 'profiles',
-        table_definition: `
-          id uuid primary key references auth.users on delete cascade,
-          first_name text,
-          last_name text,
-          phone text,
-          street_address text,
-          apartment_number text,
-          city text,
-          state text,
-          pin_code text,
-          eco_credits integer default 0,
-          level text default 'Bronze',
-          created_at timestamp with time zone default now(),
-          updated_at timestamp with time zone default now()
-        `
-      });
-      
+    if (profilesError || !profilesData || profilesData.length === 0) {
+      console.log("Creating profiles table...");
+      const { error } = await supabase.rpc('create_profiles_table_if_not_exists');
       if (error) console.error("Error creating profiles table:", error);
     }
     
-    // Check if schedule_pickups table exists
+    // Check if schedule_pickups table exists and create it if it doesn't
     const { data: pickupsData, error: pickupsError } = await supabase
       .from('schedule_pickups')
       .select('id')
       .limit(1);
       
-    // If table doesn't exist or there's an error indicating it doesn't exist, create it
-    if (pickupsError || !pickupsData) {
-      const { error } = await supabase.rpc('create_table_if_not_exists', {
-        table_name: 'schedule_pickups',
-        table_definition: `
-          id uuid primary key default uuid_generate_v4(),
-          user_id uuid references auth.users not null,
-          category text not null,
-          pickup_date date not null,
-          pickup_time text not null,
-          address text not null,
-          first_name text not null,
-          last_name text not null,
-          email text not null,
-          phone text not null,
-          image_urls text[] default '{}',
-          status text not null default 'pending',
-          eco_credits_earned integer default 0,
-          created_at timestamp with time zone default now(),
-          updated_at timestamp with time zone default now()
-        `
-      });
-      
+    if (pickupsError || !pickupsData || pickupsData.length === 0) {
+      console.log("Creating schedule_pickups table...");
+      const { error } = await supabase.rpc('create_schedule_pickups_table_if_not_exists');
       if (error) console.error("Error creating schedule_pickups table:", error);
     }
     
-    // Check if marketplace_items table exists
+    // Check if marketplace_items table exists and create it if it doesn't
     const { data: marketplaceData, error: marketplaceError } = await supabase
       .from('marketplace_items')
       .select('id')
       .limit(1);
       
-    // If table doesn't exist or there's an error indicating it doesn't exist, create it
-    if (marketplaceError || !marketplaceData) {
-      const { error } = await supabase.rpc('create_table_if_not_exists', {
-        table_name: 'marketplace_items',
-        table_definition: `
-          id uuid primary key default uuid_generate_v4(),
-          name text not null,
-          description text not null,
-          price numeric not null,
-          eco_credits integer not null,
-          category text not null,
-          condition text not null,
-          specs text[] default '{}',
-          image_url text not null,
-          rating numeric default 0,
-          reviews integer default 0,
-          available boolean default true,
-          created_at timestamp with time zone default now(),
-          updated_at timestamp with time zone default now()
-        `
-      });
-      
+    if (marketplaceError || !marketplaceData || marketplaceData.length === 0) {
+      console.log("Creating marketplace_items table...");
+      const { error } = await supabase.rpc('create_marketplace_items_table_if_not_exists');
       if (error) console.error("Error creating marketplace_items table:", error);
     }
     
-    // Check if transactions table exists
-    const { data: transactionsData, error: transactionsError } = await supabase
-      .from('transactions')
-      .select('id')
-      .limit(1);
-      
-    // If table doesn't exist or there's an error indicating it doesn't exist, create it
-    if (transactionsError || !transactionsData) {
-      const { error } = await supabase.rpc('create_table_if_not_exists', {
-        table_name: 'transactions',
-        table_definition: `
-          id uuid primary key default uuid_generate_v4(),
-          user_id uuid references auth.users not null,
-          type text not null,
-          amount integer not null,
-          description text not null,
-          created_at timestamp with time zone default now()
-        `
-      });
-      
-      if (error) console.error("Error creating transactions table:", error);
+    // Seed the marketplace with initial products if it's empty
+    if (!marketplaceData || marketplaceData.length === 0) {
+      await seedMarketplace();
     }
     
     console.log("Database tables checked/initialized");
-    
-    // Seed the marketplace with initial products if it's empty
-    const { data: existingProducts } = await supabase
-      .from('marketplace_items')
-      .select('id')
-      .limit(1);
-      
-    if (!existingProducts || existingProducts.length === 0) {
-      await seedMarketplace();
-    }
     
   } catch (error) {
     console.error("Error initializing database:", error);
