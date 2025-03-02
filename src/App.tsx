@@ -18,6 +18,8 @@ import AiAssistant from "./components/AiAssistant";
 import Analysis from "./pages/Analysis";
 import AboutUs from "./pages/AboutUs";
 import Admin from "./pages/Admin";
+import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
 import { AuthProvider } from "./contexts/AuthContext";
 import { initializeDatabase } from "./lib/supabaseClient";
 
@@ -51,6 +53,8 @@ const App = () => {
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/event/:id" element={<EventDetails />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AiAssistant />

@@ -1,0 +1,11 @@
+
+project_id = "dqzzkycxafylvjghppst"
+
+[events-management]
+verify_jwt = true
+
+[payment-processing]
+verify_jwt = false 
+
+[generate-eco-tips]
+verify_jwt = false

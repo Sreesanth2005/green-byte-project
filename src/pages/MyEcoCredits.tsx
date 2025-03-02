@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -9,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import PaymentPortal from "@/components/PaymentPortal";
 
 const MyEcoCredits = () => {
   const [rupeeAmount, setRupeeAmount] = useState("");
@@ -20,6 +20,7 @@ const MyEcoCredits = () => {
   const [currentLevel, setCurrentLevel] = useState("Bronze");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showPaymentPortal, setShowPaymentPortal] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -44,7 +45,6 @@ const MyEcoCredits = () => {
     if (!user) return;
     
     try {
-      // Get user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -58,7 +58,6 @@ const MyEcoCredits = () => {
         setCurrentLevel(profile.level || "Bronze");
       }
       
-      // Count recycled items
       const { count: recycledCount, error: recycledError } = await supabase
         .from('schedule_pickups')
         .select('*', { count: 'exact', head: true })
@@ -68,7 +67,6 @@ const MyEcoCredits = () => {
       
       setItemsRecycled(recycledCount || 0);
       
-      // Calculate monthly earned
       const firstDayOfMonth = new Date();
       firstDayOfMonth.setDate(1);
       firstDayOfMonth.setHours(0, 0, 0, 0);
@@ -84,7 +82,6 @@ const MyEcoCredits = () => {
       
       const monthlyTotal = monthlyData?.reduce((sum, transaction) => sum + transaction.amount, 0) || 0;
       setMonthlyEarned(monthlyTotal);
-      
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -112,18 +109,16 @@ const MyEcoCredits = () => {
   const handleRupeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
     setRupeeAmount(value);
-    // 1 Rupee = 10 EcoCredits
     setCreditAmount(value ? (parseInt(value) * 10).toString() : "");
   };
 
   const handleCreditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
     setCreditAmount(value);
-    // 10 EcoCredits = 1 Rupee
     setRupeeAmount(value ? (parseInt(value) / 10).toString() : "");
   };
 
-  const handleConvert = async () => {
+  const handleConvert = () => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -143,95 +138,27 @@ const MyEcoCredits = () => {
       return;
     }
     
-    const credits = parseInt(creditAmount);
-    
-    try {
-      setLoading(true);
-      
-      if (convertionType === "toCredits") {
-        // Add credits to user's account
-        const { error: updateError } = await supabase.rpc('add_eco_credits', {
-          user_id: user.id,
-          amount: credits
-        });
-        
-        if (updateError) throw updateError;
-        
-        // Create transaction record
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert([
-            {
-              user_id: user.id,
-              type: 'Added',
-              amount: credits,
-              description: `Rupees Conversion (₹${rupeeAmount})`
-            }
-          ]);
-          
-        if (transactionError) throw transactionError;
-        
+    if (convertionType === "toRupees") {
+      const credits = parseInt(creditAmount);
+      if (credits > totalCredits) {
         toast({
-          title: "Conversion successful",
-          description: `You've converted ₹${rupeeAmount} to ${creditAmount} EcoCredits`,
+          title: "Insufficient credits",
+          description: "You don't have enough EcoCredits for this conversion.",
+          variant: "destructive",
         });
-      } else {
-        // Check if user has enough credits
-        if (credits > totalCredits) {
-          toast({
-            title: "Insufficient credits",
-            description: "You don't have enough EcoCredits for this conversion.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Remove credits from user's account
-        const { error: updateError } = await supabase.rpc('add_eco_credits', {
-          user_id: user.id,
-          amount: -credits
-        });
-        
-        if (updateError) throw updateError;
-        
-        // Create transaction record
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert([
-            {
-              user_id: user.id,
-              type: 'Withdrawn',
-              amount: credits,
-              description: `Converted to Rupees (₹${rupeeAmount})`
-            }
-          ]);
-          
-        if (transactionError) throw transactionError;
-        
-        toast({
-          title: "Conversion successful",
-          description: `You've converted ${creditAmount} EcoCredits to ₹${rupeeAmount}`,
-        });
+        return;
       }
-      
-      // Refresh data
-      fetchUserData();
-      fetchTransactions();
-      
-      // Reset form
-      setRupeeAmount("");
-      setCreditAmount("");
-      
-    } catch (error: any) {
-      console.error("Conversion error:", error);
-      toast({
-        title: "Conversion failed",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
+    
+    setShowPaymentPortal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setRupeeAmount("");
+    setCreditAmount("");
+    
+    fetchUserData();
+    fetchTransactions();
   };
 
   return (
@@ -276,14 +203,13 @@ const MyEcoCredits = () => {
             </div>
             <p className="text-3xl font-bold">{currentLevel}</p>
             <p className="text-sm text-gray-600">
-              {currentLevel === "Bronze" ? "250 to next level" : 
-               currentLevel === "Silver" ? "500 to next level" : 
-               currentLevel === "Gold" ? "1000 to next level" : "Max level"}
+              {currentLevel === "Bronze" ? "500 to next level" : 
+               currentLevel === "Silver" ? "2000 to next level" : 
+               currentLevel === "Gold" ? "5000 to next level" : "Max level"}
             </p>
           </div>
         </div>
 
-        {/* Currency Converter */}
         <div className="bg-white rounded-2xl shadow-sm mb-8">
           <div className="p-6 border-b">
             <h2 className="text-xl font-semibold">Convert Currency</h2>
@@ -346,7 +272,6 @@ const MyEcoCredits = () => {
           </div>
         </div>
 
-        {/* Transaction History */}
         <div className="bg-white rounded-2xl shadow-sm">
           <div className="p-6 border-b">
             <h2 className="text-xl font-semibold">Transaction History</h2>
@@ -380,6 +305,17 @@ const MyEcoCredits = () => {
           </div>
         </div>
       </main>
+
+      {showPaymentPortal && (
+        <PaymentPortal
+          isOpen={showPaymentPortal}
+          onClose={() => setShowPaymentPortal(false)}
+          conversionType={convertionType}
+          amount={rupeeAmount}
+          creditAmount={creditAmount}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       <Footer />
     </div>
