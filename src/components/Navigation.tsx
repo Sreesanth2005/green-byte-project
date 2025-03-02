@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Recycle, User, Menu, X, BarChart2, Info } from "lucide-react";
+import { Recycle, User, Menu, X, BarChart2, Info, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -37,6 +37,9 @@ const Navigation = () => {
           </Link>
           <Link to="/marketplace" className="text-sm font-medium hover:text-primary transition-colors">
             Marketplace
+          </Link>
+          <Link to="/events" className="text-sm font-medium hover:text-primary transition-colors">
+            Events
           </Link>
           <Link to="/my-ecocredits" className="text-sm font-medium hover:text-primary transition-colors">
             My EcoCredits
@@ -82,6 +85,13 @@ const Navigation = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Marketplace
+            </Link>
+            <Link 
+              to="/events" 
+              className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Events
             </Link>
             <Link 
               to="/my-ecocredits" 

@@ -1,31 +1,67 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  event_date: string;
+  event_time: string;
+  location: string;
+  image_url: string;
+}
 
 const EventsSection = () => {
-  const events = [
-    {
-      title: "E-Waste Collection Drive",
-      date: "March 15, 2024",
-      location: "Central Park, New York",
-      image: "https://images.unsplash.com/photo-1576267423048-15c0040fec78?w=800&h=400&fit=crop",
-      description: "Join us for our biggest e-waste collection event of the year. Bring your old electronics and earn extra EcoCredits!",
-    },
-    {
-      title: "Sustainability Workshop",
-      date: "March 20, 2024",
-      location: "Tech Hub, San Francisco",
-      image: "https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&h=400&fit=crop",
-      description: "Learn about sustainable technology practices and how to reduce your electronic waste footprint.",
-    },
-    {
-      title: "Community Recycling Day",
-      date: "March 25, 2024",
-      location: "Civic Center, Chicago",
-      image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&h=400&fit=crop",
-      description: "A community event focused on electronics recycling education and collection.",
-    },
-  ];
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .limit(6)
+        .order('event_date', { ascending: true });
+        
+      if (error) throw error;
+      
+      setEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching events:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load events. Please try again later."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleRegisterClick = (eventId: string) => {
+    navigate(`/events/${eventId}`);
+  };
 
   return (
     <section className="py-24 bg-secondary">
@@ -37,31 +73,55 @@ const EventsSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {events.map((event) => (
-            <div key={event.title} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <img
-                src={event.image}
-                alt={event.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="font-semibold text-xl mb-2">{event.title}</h3>
-                <p className="text-gray-600 mb-4">{event.description}</p>
-                <div className="space-y-2">
-                  <div className="flex items-center text-gray-600">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {event.date}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : events.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {events.map((event) => (
+              <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img
+                  src={event.image_url || "/placeholder.svg"}
+                  alt={event.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="font-semibold text-xl mb-2">{event.title}</h3>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {formatDate(event.event_date)}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {event.location}
+                    </div>
                   </div>
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {event.location}
-                  </div>
+                  <Button 
+                    className="w-full mt-4"
+                    onClick={() => handleRegisterClick(event.id)}
+                  >
+                    Register Now
+                  </Button>
                 </div>
-                <Button className="w-full mt-4">Register Now</Button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">No upcoming events found.</p>
+            <Button className="mt-4" variant="outline" asChild>
+              <Link to="/events">View All Events</Link>
+            </Button>
+          </div>
+        )}
+        
+        <div className="text-center mt-12">
+          <Button variant="outline" size="lg" asChild>
+            <Link to="/events">View All Events</Link>
+          </Button>
         </div>
       </div>
     </section>
