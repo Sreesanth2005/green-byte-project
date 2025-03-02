@@ -194,6 +194,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          account_updates: boolean | null
+          created_at: string | null
+          id: string
+          newsletter: boolean | null
+          order_updates: boolean | null
+          recycling_reminders: boolean | null
+          special_offers: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_updates?: boolean | null
+          created_at?: string | null
+          id?: string
+          newsletter?: boolean | null
+          order_updates?: boolean | null
+          recycling_reminders?: boolean | null
+          special_offers?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_updates?: boolean | null
+          created_at?: string | null
+          id?: string
+          newsletter?: boolean | null
+          order_updates?: boolean | null
+          recycling_reminders?: boolean | null
+          special_offers?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           apartment_number: string | null
@@ -239,6 +275,42 @@ export type Database = {
           state?: string | null
           street_address?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recycling_stats: {
+        Row: {
+          amount: number
+          carbon_saved: number
+          category: string
+          created_at: string | null
+          date: string
+          energy_saved: number
+          id: string
+          user_id: string | null
+          water_saved: number
+        }
+        Insert: {
+          amount: number
+          carbon_saved?: number
+          category: string
+          created_at?: string | null
+          date?: string
+          energy_saved?: number
+          id?: string
+          user_id?: string | null
+          water_saved?: number
+        }
+        Update: {
+          amount?: number
+          carbon_saved?: number
+          category?: string
+          created_at?: string | null
+          date?: string
+          energy_saved?: number
+          id?: string
+          user_id?: string | null
+          water_saved?: number
         }
         Relationships: []
       }

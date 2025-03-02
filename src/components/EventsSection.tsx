@@ -14,6 +14,8 @@ interface Event {
   event_time: string;
   location: string;
   image_url: string;
+  max_participants: number;
+  current_participants: number;
 }
 
 const EventsSection = () => {
@@ -32,7 +34,7 @@ const EventsSection = () => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .limit(6)
+        .limit(3)
         .order('event_date', { ascending: true });
         
       if (error) throw error;
@@ -60,7 +62,7 @@ const EventsSection = () => {
   };
 
   const handleRegisterClick = (eventId: string) => {
-    navigate(`/events/${eventId}`);
+    navigate(`/event/${eventId}`);
   };
 
   return (
@@ -89,7 +91,7 @@ const EventsSection = () => {
                 <div className="p-6">
                   <h3 className="font-semibold text-xl mb-2">{event.title}</h3>
                   <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mb-4">
                     <div className="flex items-center text-gray-600">
                       <Calendar className="w-4 h-4 mr-2" />
                       {formatDate(event.event_date)}
@@ -99,11 +101,17 @@ const EventsSection = () => {
                       {event.location}
                     </div>
                   </div>
+                  <div className="text-sm text-gray-500 mb-4">
+                    {event.current_participants}/{event.max_participants} registered
+                  </div>
                   <Button 
-                    className="w-full mt-4"
+                    className="w-full"
                     onClick={() => handleRegisterClick(event.id)}
+                    disabled={event.current_participants >= event.max_participants}
                   >
-                    Register Now
+                    {event.current_participants >= event.max_participants
+                      ? "Event Full"
+                      : "Register Now"}
                   </Button>
                 </div>
               </div>
