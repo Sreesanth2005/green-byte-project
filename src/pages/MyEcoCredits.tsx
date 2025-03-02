@@ -308,12 +308,8 @@ const MyEcoCredits = () => {
 
       {showPaymentPortal && (
         <PaymentPortal
-          isOpen={showPaymentPortal}
+          open={showPaymentPortal}
           onClose={() => setShowPaymentPortal(false)}
-          conversionType={convertionType}
-          amount={rupeeAmount}
-          creditAmount={creditAmount}
-          onSuccess={handlePaymentSuccess}
         />
       )}
 
