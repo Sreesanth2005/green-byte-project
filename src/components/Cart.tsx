@@ -64,11 +64,25 @@ const Cart = ({ open, onClose }: CartProps) => {
         
       if (error) throw error;
       
-      setCartItems(data || []);
+      // Transform the data to match the CartItem interface
+      const transformedData = data?.map(item => ({
+        id: item.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          eco_credits: item.product.eco_credits,
+          price: item.product.price,
+          image_url: item.product.image_url
+        }
+      })) || [];
+      
+      setCartItems(transformedData);
       
       // Calculate total credits
-      const total = (data || []).reduce((sum, item) => {
-        return sum + (item.product?.eco_credits || 0) * item.quantity;
+      const total = transformedData.reduce((sum, item) => {
+        return sum + item.product.eco_credits * item.quantity;
       }, 0);
       
       setTotalCredits(total);
@@ -226,13 +240,13 @@ const Cart = ({ open, onClose }: CartProps) => {
               {cartItems.map((item) => (
                 <div key={item.id} className="flex items-center border rounded-lg p-3">
                   <img 
-                    src={item.product?.image_url} 
-                    alt={item.product?.name} 
+                    src={item.product.image_url} 
+                    alt={item.product.name} 
                     className="w-16 h-16 object-cover rounded"
                   />
                   <div className="ml-4 flex-grow">
-                    <h4 className="font-medium text-sm">{item.product?.name}</h4>
-                    <p className="text-sm text-primary">{item.product?.eco_credits} Credits</p>
+                    <h4 className="font-medium text-sm">{item.product.name}</h4>
+                    <p className="text-sm text-primary">{item.product.eco_credits} Credits</p>
                     <div className="flex items-center mt-2">
                       <Button 
                         variant="outline" 

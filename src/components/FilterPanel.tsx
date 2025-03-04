@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -51,25 +50,32 @@ const FilterPanel = ({ onFilterChange, isMobile = false }: FilterPanelProps) => 
       ? [...filters.categories, category]
       : filters.categories.filter((c) => c !== category);
     
-    const updatedFilters = { ...filters, categories: updatedCategories };
+    const updatedFilters: FilterState = { 
+      ...filters, 
+      categories: updatedCategories 
+    };
     setFilters(updatedFilters);
     onFilterChange(updatedFilters);
   };
 
   const handleSortChange = (value: string) => {
-    const updatedFilters = { ...filters, sortBy: value };
+    const updatedFilters: FilterState = { ...filters, sortBy: value };
     setFilters(updatedFilters);
     onFilterChange(updatedFilters);
   };
 
   const handleRatingChange = (rating: number) => {
-    const updatedFilters = { ...filters, minRating: rating };
+    const updatedFilters: FilterState = { ...filters, minRating: rating };
     setFilters(updatedFilters);
     onFilterChange(updatedFilters);
   };
 
   const handlePriceChange = (value: number[]) => {
-    const updatedFilters = { ...filters, priceRange: [value[0], value[1]] };
+    const priceRange: [number, number] = [
+      value[0] || 0,
+      value[1] || 12000
+    ];
+    const updatedFilters: FilterState = { ...filters, priceRange };
     setFilters(updatedFilters);
     onFilterChange(updatedFilters);
   };
@@ -180,7 +186,6 @@ const FilterPanel = ({ onFilterChange, isMobile = false }: FilterPanelProps) => 
     </div>
   );
 
-  // Mobile view with Sheet component
   if (isMobile) {
     return (
       <Sheet>
@@ -210,7 +215,6 @@ const FilterPanel = ({ onFilterChange, isMobile = false }: FilterPanelProps) => 
     );
   }
 
-  // Desktop view
   return (
     <div className="rounded-md border p-4">
       <div className="flex justify-between items-center mb-4">
