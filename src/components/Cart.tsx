@@ -46,43 +46,50 @@ const Cart = ({ open, onClose }: CartProps) => {
     
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First, get cart items
+      const { data: cartData, error: cartError } = await supabase
         .from('cart_items')
-        .select(`
-          id,
-          product_id,
-          quantity,
-          product:marketplace_items (
-            id,
-            name,
-            eco_credits,
-            price,
-            image_url
-          )
-        `)
+        .select('id, product_id, quantity')
         .eq('user_id', user.id);
         
-      if (error) throw error;
+      if (cartError) throw cartError;
       
-      // Transform the data to match the CartItem interface
-      const transformedData = data?.map(item => ({
-        id: item.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        product: {
-          // Access the first item if product is an array, or use default values if not available
-          id: Array.isArray(item.product) && item.product[0]?.id || "",
-          name: Array.isArray(item.product) && item.product[0]?.name || "",
-          eco_credits: Array.isArray(item.product) && item.product[0]?.eco_credits || 0,
-          price: Array.isArray(item.product) && item.product[0]?.price || 0,
-          image_url: Array.isArray(item.product) && item.product[0]?.image_url || ""
+      if (!cartData || cartData.length === 0) {
+        setCartItems([]);
+        setTotalCredits(0);
+        setLoading(false);
+        return;
+      }
+      
+      // Then, fetch product details for each cart item
+      const productPromises = cartData.map(async (item) => {
+        const { data: productData, error: productError } = await supabase
+          .from('marketplace_items')
+          .select('id, name, eco_credits, price, image_url')
+          .eq('id', item.product_id)
+          .single();
+          
+        if (productError) {
+          console.error("Error fetching product:", productError);
+          return null;
         }
-      })) || [];
+        
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          product: productData
+        };
+      });
       
-      setCartItems(transformedData);
+      const results = await Promise.all(productPromises);
+      const validCartItems = results.filter(item => item !== null) as CartItem[];
+      
+      setCartItems(validCartItems);
       
       // Calculate total credits
-      const total = transformedData.reduce((sum, item) => {
+      const total = validCartItems.reduce((sum, item) => {
         return sum + item.product.eco_credits * item.quantity;
       }, 0);
       
@@ -107,11 +114,11 @@ const Cart = ({ open, onClose }: CartProps) => {
         .from('profiles')
         .select('eco_credits')
         .eq('id', user.id)
-        .single();
+        .limit(1);
         
       if (error) throw error;
       
-      setUserCredits(data?.eco_credits || 0);
+      setUserCredits(data && data.length > 0 ? data[0].eco_credits : 0);
     } catch (error) {
       console.error("Error fetching user credits:", error);
     }
@@ -141,7 +148,7 @@ const Cart = ({ open, onClose }: CartProps) => {
         .map(item => item.id === itemId ? 
           { ...item, quantity: newQuantity } : item
         )
-        .reduce((sum, item) => sum + (item.product?.eco_credits || 0) * item.quantity, 0);
+        .reduce((sum, item) => sum + item.product.eco_credits * item.quantity, 0);
       
       setTotalCredits(newTotal);
     } catch (error) {
@@ -172,7 +179,7 @@ const Cart = ({ open, onClose }: CartProps) => {
       
       // Recalculate total
       if (itemToRemove) {
-        setTotalCredits(prev => prev - (itemToRemove.product?.eco_credits || 0) * itemToRemove.quantity);
+        setTotalCredits(prev => prev - itemToRemove.product.eco_credits * itemToRemove.quantity);
       }
       
       toast({

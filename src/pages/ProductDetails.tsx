@@ -65,7 +65,7 @@ const ProductDetails = () => {
     }
   };
 
-  const addToCart = () => {
+  const addToCart = async () => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -75,10 +75,63 @@ const ProductDetails = () => {
       return;
     }
     
-    toast({
-      title: "Added to cart",
-      description: `${quantity} x ${product.name} added to your cart.`,
-    });
+    if (!product || !id) {
+      toast({
+        title: "Error",
+        description: "Product information is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Check if item already exists in cart
+      const { data: existingItems, error: checkError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', id);
+        
+      if (checkError) throw checkError;
+      
+      if (existingItems && existingItems.length > 0) {
+        // Update quantity
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: existingItems[0].quantity + quantity,
+            updated_at: new Date()
+          })
+          .eq('id', existingItems[0].id);
+          
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from('cart_items')
+          .insert([
+            { 
+              user_id: user.id, 
+              product_id: id,
+              quantity: quantity
+            }
+          ]);
+          
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Added to cart",
+        description: `${quantity} x ${product.name} added to your cart.`,
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {

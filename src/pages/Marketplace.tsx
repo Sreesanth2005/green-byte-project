@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -117,7 +116,10 @@ const Marketplace = () => {
         // Update quantity
         const { error } = await supabase
           .from('cart_items')
-          .update({ quantity: existingItems[0].quantity + 1 })
+          .update({ 
+            quantity: existingItems[0].quantity + 1,
+            updated_at: new Date()
+          })
           .eq('id', existingItems[0].id);
           
         if (error) throw error;
