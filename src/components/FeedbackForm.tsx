@@ -1,188 +1,137 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
 
 const FeedbackForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [rating, setRating] = useState<number>(0);
   const [message, setMessage] = useState("");
+  const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
-  
-  const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Load user data if available
-  useState(() => {
-    const loadUserData = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
-          if (fullName) setName(fullName);
-        }
-        
-        if (user.email) {
-          setEmail(user.email);
-        }
-      } catch (err) {
-        console.error("Error loading user data:", err);
-      }
-    };
-    
-    loadUserData();
-  });
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { user } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!name || !email || !rating || !message) {
+    if (rating === 0) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all fields"
+        title: "Rating Required",
+        description: "Please select a rating before submitting feedback.",
+        variant: "destructive"
       });
       return;
     }
     
-    setLoading(true);
-    
     try {
-      const response = await supabase.functions.invoke('events-management', {
-        body: {
-          action: 'submit-feedback',
-          userId: user?.id, // Optional
-          name,
-          email,
-          rating,
-          message
-        }
-      });
+      setLoading(true);
       
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to submit feedback");
-      }
+      // Submit feedback to Supabase
+      const { error } = await supabase
+        .from('feedback')
+        .insert([
+          { 
+            name, 
+            email, 
+            message, 
+            rating,
+            user_id: user?.id 
+          }
+        ]);
+        
+      if (error) throw error;
       
       // Clear form
-      setRating(0);
+      setName("");
+      setEmail("");
       setMessage("");
-      
-      // Only clear name and email if not logged in
-      if (!user) {
-        setName("");
-        setEmail("");
-      }
+      setRating(0);
       
       toast({
-        title: "Thank you for your feedback!",
-        description: user ? "You've earned 20 EcoCredits for your contribution." : "We appreciate your input.",
+        title: "Feedback Submitted",
+        description: "Thank you for your feedback! We appreciate your input.",
       });
-    } catch (err: any) {
+      
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || "Failed to submit feedback. Please try again."
+        title: "Submission Failed",
+        description: "We couldn't submit your feedback. Please try again later.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>Share Your Feedback</CardTitle>
-        <CardDescription>Help us improve our service with your valuable input</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email"
-              required
-            />
-          </div>
-          
-          <div>
-            <Label>Rating</Label>
-            <div className="flex items-center mt-1 space-x-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  className="focus:outline-none"
-                >
-                  <Star
-                    className={`h-6 w-6 ${
-                      star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Share your thoughts with us"
-              rows={4}
-              required
-            />
-          </div>
-        </CardContent>
-        
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Submitting..." : "Submit Feedback"}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Your name"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="Your email"
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium mb-1">Rating</label>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => setRating(star)}
+              className="focus:outline-none"
+            >
+              <Star
+                className={`w-8 h-8 ${
+                  star <= rating ? "fill-primary text-primary" : "text-gray-300"
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div>
+        <label htmlFor="message" className="block text-sm font-medium mb-1">Feedback</label>
+        <Textarea
+          id="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          required
+          placeholder="Your feedback"
+          className="min-h-32"
+        />
+      </div>
+      
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Submitting..." : "Submit Feedback"}
+      </Button>
+    </form>
   );
 };
 

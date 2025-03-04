@@ -3,23 +3,34 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Star, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Star, ChevronLeft, ChevronRight, MessageSquare, ShoppingCart } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
+import FilterPanel, { FilterState } from "@/components/FilterPanel";
+import Cart from "@/components/Cart";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Marketplace = () => {
   const [activeBanner, setActiveBanner] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<FilterState>({
+    priceRange: [0, 12000],
+    categories: [],
+    minRating: 0,
+    sortBy: "recommended",
+  });
+  const [showCart, setShowCart] = useState(false);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
   
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const banners = [
     {
@@ -36,18 +47,12 @@ const Marketplace = () => {
     },
   ];
 
-  const categories = [
-    { id: "all", name: "All Products" },
-    { id: "phones", name: "Smartphones" },
-    { id: "laptops", name: "Laptops & Computers" },
-    { id: "tablets", name: "Tablets & E-Readers" },
-    { id: "accessories", name: "Accessories" },
-    { id: "audio", name: "Audio Devices" },
-  ];
-
   useEffect(() => {
     fetchProducts();
-  }, []);
+    if (user) {
+      fetchCartCount();
+    }
+  }, [user]);
 
   const fetchProducts = async () => {
     try {
@@ -71,12 +76,126 @@ const Marketplace = () => {
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = activeCategory === "all" || product.category === activeCategory;
-    const matchesSearch = searchQuery === "" || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const fetchCartCount = async () => {
+    if (!user) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from('cart_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      setCartItemsCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add items to your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Check if item already exists in cart
+      const { data: existingItems, error: checkError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+        
+      if (checkError) throw checkError;
+      
+      if (existingItems && existingItems.length > 0) {
+        // Update quantity
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity: existingItems[0].quantity + 1 })
+          .eq('id', existingItems[0].id);
+          
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from('cart_items')
+          .insert([
+            { 
+              user_id: user.id, 
+              product_id: productId,
+              quantity: 1
+            }
+          ]);
+          
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Added to Cart",
+        description: "Item has been added to your cart.",
+      });
+      
+      // Update cart count
+      fetchCartCount();
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Failed to add item",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+  };
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Price range filter
+      const priceInRange = 
+        product.eco_credits >= filters.priceRange[0] && 
+        product.eco_credits <= filters.priceRange[1];
+      
+      // Category filter
+      const matchesCategory = 
+        filters.categories.length === 0 || 
+        filters.categories.includes(product.category);
+      
+      // Rating filter
+      const matchesRating = product.rating >= filters.minRating;
+      
+      // Search query
+      const matchesSearch = searchQuery === "" || 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return priceInRange && matchesCategory && matchesRating && matchesSearch;
+    }).sort((a, b) => {
+      // Apply sorting
+      switch (filters.sortBy) {
+        case 'price_low_high':
+          return a.eco_credits - b.eco_credits;
+        case 'price_high_low':
+          return b.eco_credits - a.eco_credits;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'recommended':
+        default:
+          // Default sorting (recommended)
+          return 0;
+      }
+    });
+  }, [products, filters, searchQuery]);
 
   const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,8 +219,19 @@ const Marketplace = () => {
     }
     
     try {
-      // In a real app, you would send this to your database
-      console.log({ rating, feedback });
+      const { error } = await supabase
+        .from('feedback')
+        .insert([
+          { 
+            name: user?.user_metadata?.name || "Anonymous",
+            email: user?.email || "anonymous@example.com",
+            message: feedback,
+            rating,
+            user_id: user?.id
+          }
+        ]);
+        
+      if (error) throw error;
       
       toast({
         title: "Feedback submitted",
@@ -180,74 +310,84 @@ const Marketplace = () => {
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               </div>
-              <div className="relative">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  Filter
+              <div className="flex gap-2">
+                <FilterPanel onFilterChange={handleFilterChange} isMobile={true} />
+                <Button 
+                  variant="outline" 
+                  className="relative" 
+                  onClick={() => setShowCart(true)}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Cart
+                  {cartItemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemsCount}
+                    </span>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Category Tabs */}
-          <div className="mb-8 overflow-x-auto">
-            <div className="flex space-x-2 min-w-max pb-2">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={activeCategory === category.id ? "default" : "outline"}
-                  onClick={() => setActiveCategory(category.id)}
-                  className="whitespace-nowrap"
-                >
-                  {category.name}
-                </Button>
-              ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Desktop Filter Panel */}
+            <div className="hidden lg:block">
+              <FilterPanel onFilterChange={handleFilterChange} />
             </div>
-          </div>
 
-          {/* Products Grid */}
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading products...</p>
-            </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <Link to={`/product/${product.id}`} className="block">
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                      <div className="flex items-center mb-2">
-                        <div className="flex items-center text-primary mr-2">
-                          <Star className="w-4 h-4 fill-primary" />
-                          <span className="ml-1">{product.rating}</span>
+            {/* Products Grid */}
+            <div className="lg:col-span-3">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading products...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProducts.map((product) => (
+                    <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <Link to={`/product/${product.id}`} className="block">
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="p-4">
+                          <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                          <div className="flex items-center mb-2">
+                            <div className="flex items-center text-primary mr-2">
+                              <Star className="w-4 h-4 fill-primary" />
+                              <span className="ml-1">{product.rating}</span>
+                            </div>
+                            <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xl font-semibold">{product.eco_credits} Credits</span>
+                              <p className="text-xs text-gray-500">(₹{product.price})</p>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xl font-semibold">{product.eco_credits} Credits</span>
-                          <p className="text-xs text-gray-500">(₹{product.price})</p>
-                        </div>
-                        <Button>Add to Cart</Button>
+                      </Link>
+                      <div className="px-4 pb-4">
+                        <Button 
+                          onClick={() => addToCart(product.id)}
+                          className="w-full"
+                        >
+                          Add to Cart
+                        </Button>
                       </div>
                     </div>
-                  </Link>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-12">
+                  <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                  <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">No products found</h3>
-              <p className="text-gray-600">Try adjusting your search or filter criteria</p>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Feedback Button */}
@@ -304,6 +444,12 @@ const Marketplace = () => {
             </div>
           </div>
         )}
+
+        {/* Cart Component */}
+        <Cart 
+          open={showCart} 
+          onClose={() => setShowCart(false)} 
+        />
       </main>
 
       <Footer />

@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -17,12 +18,16 @@ const Hero = () => {
           Schedule a pickup, responsibly dispose of your electronic waste, and earn rewards while helping the environment.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fadeIn [animation-delay:600ms]">
-          <Button size="lg" className="bg-primary hover:bg-primary/90">
-            Schedule Pickup
-            <ArrowRight className="ml-2 h-5 w-5" />
+          <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+            <Link to="/schedule-pickup">
+              Schedule Pickup
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
           </Button>
-          <Button variant="outline" size="lg">
-            Learn More
+          <Button variant="outline" size="lg" asChild>
+            <Link to="/about-us">
+              Learn More
+            </Link>
           </Button>
         </div>
       </div>

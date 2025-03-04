@@ -1,53 +1,66 @@
 
 import { supabase } from './supabaseClient';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Function to generate eco tips using Gemini AI
-export const generateEcoTip = async (category: string = 'recycling') => {
+// Initialize the Google Generative AI with the provided API key
+const genAI = new GoogleGenerativeAI("AIzaSyAuRC8nEx9CZ1220iOnliDpde5jOR-zgk0");
+
+export const analyzeRecyclingImpact = async (userId: string | undefined, category: string, timeFrame: string) => {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-eco-tips', {
-      body: { category },
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     
-    if (error) throw error;
-    return data;
+    // Get user recycling data from Supabase if user is logged in
+    let recyclingData = null;
+    if (userId) {
+      const { data, error } = await supabase
+        .from('recycling_stats')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (!error) {
+        recyclingData = data;
+      }
+    }
+    
+    // Create a prompt for Gemini AI
+    const prompt = `
+    As an environmental impact analyst for Green Byte, generate an analysis of the user's e-waste recycling impact.
+    
+    ${recyclingData ? `Here is the user's recycling data: ${JSON.stringify(recyclingData)}` : 'The user does not have specific recycling data yet.'}
+    Category filter: ${category}
+    Time period: ${timeFrame}
+    
+    Please provide an analysis that includes:
+    1. Environmental impact (CO2 saved, water saved, energy saved)
+    2. Resources recovered (metals, plastics, etc.)
+    3. Comparison to average recycling habits
+    4. Suggestions for improving recycling habits
+    
+    Keep the response concise, informative, and motivational.
+    `;
+    
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    return { analysis: response.text() };
   } catch (error) {
-    console.error('Error generating eco tip:', error);
+    console.error("Error analyzing recycling impact:", error);
     throw error;
   }
 };
 
-// Function to analyze recycling impact using Gemini AI
-export const analyzeRecyclingImpact = async (
-  userId?: string, 
-  category: string = 'all', 
-  timeFrame: string = 'all'
-) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('analyze-recycling-impact', {
-      body: { userId, category, timeFrame },
-    });
-    
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error analyzing recycling impact:', error);
-    throw error;
-  }
-};
-
-// Function to get random eco tips from the database
-export const getRandomEcoTips = async (limit: number = 5) => {
+export const getRandomEcoTips = async (count: number = 5) => {
   try {
     const { data, error } = await supabase
       .from('eco_tips')
       .select('*')
-      .limit(limit)
-      .order('created_at', { ascending: false });
-    
+      .order('id', { ascending: false })
+      .limit(count);
+      
     if (error) throw error;
+    
     return data;
   } catch (error) {
-    console.error('Error fetching eco tips:', error);
+    console.error("Error fetching eco tips:", error);
     throw error;
   }
 };

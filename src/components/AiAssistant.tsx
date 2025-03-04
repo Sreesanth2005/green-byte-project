@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the Google Generative AI
-const genAI = new GoogleGenerativeAI("AIzaSyDNWWxwU4erRWqLXBXnQeUB5s74UfTYPAQ"); // This is a demo API key; in production, use env variables
+const genAI = new GoogleGenerativeAI("AIzaSyAuRC8nEx9CZ1220iOnliDpde5jOR-zgk0");
 
 const AiAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
