@@ -69,7 +69,7 @@ const Cart = ({ open, onClose }: CartProps) => {
         id: item.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        product: {
+        product: item.product && {
           id: item.product.id,
           name: item.product.name,
           eco_credits: item.product.eco_credits,
