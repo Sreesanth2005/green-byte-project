@@ -69,12 +69,12 @@ const Cart = ({ open, onClose }: CartProps) => {
         id: item.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        product: item.product && {
-          id: item.product.id,
-          name: item.product.name,
-          eco_credits: item.product.eco_credits,
-          price: item.product.price,
-          image_url: item.product.image_url
+        product: {
+          id: item.product?.id || "",
+          name: item.product?.name || "",
+          eco_credits: item.product?.eco_credits || 0,
+          price: item.product?.price || 0,
+          image_url: item.product?.image_url || ""
         }
       })) || [];
       

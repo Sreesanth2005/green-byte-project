@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -66,7 +67,7 @@ const EventsSection = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options = { year: 'numeric' as const, month: 'long' as const, day: 'numeric' as const };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
