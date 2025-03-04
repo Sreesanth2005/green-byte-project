@@ -70,11 +70,12 @@ const Cart = ({ open, onClose }: CartProps) => {
         product_id: item.product_id,
         quantity: item.quantity,
         product: {
-          id: item.product?.id || "",
-          name: item.product?.name || "",
-          eco_credits: item.product?.eco_credits || 0,
-          price: item.product?.price || 0,
-          image_url: item.product?.image_url || ""
+          // Access the first item if product is an array, or use default values if not available
+          id: Array.isArray(item.product) && item.product[0]?.id || "",
+          name: Array.isArray(item.product) && item.product[0]?.name || "",
+          eco_credits: Array.isArray(item.product) && item.product[0]?.eco_credits || 0,
+          price: Array.isArray(item.product) && item.product[0]?.price || 0,
+          image_url: Array.isArray(item.product) && item.product[0]?.image_url || ""
         }
       })) || [];
       
