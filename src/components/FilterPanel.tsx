@@ -1,232 +1,216 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Star, ChevronsUpDown, Filter as FilterIcon, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-  SheetFooter,
-} from "@/components/ui/sheet";
+
+import React, { useState, useEffect } from 'react';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
+import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+export interface FilterState {
+  priceRange: [number, number];
+  categories: string[];
+  minRating: number;
+  sortBy: 'recommended' | 'price_low_high' | 'price_high_low' | 'rating' | 'newest';
+}
 
 interface FilterPanelProps {
   onFilterChange: (filters: FilterState) => void;
   isMobile?: boolean;
 }
 
-export interface FilterState {
-  priceRange: [number, number];
-  categories: string[];
-  minRating: number;
-  sortBy: string;
-}
-
-const initialState: FilterState = {
-  priceRange: [0, 12000],
-  categories: [],
-  minRating: 0,
-  sortBy: "recommended",
-};
-
-const categories = [
-  { id: "phones", label: "Smartphones" },
-  { id: "laptops", label: "Laptops & Computers" },
-  { id: "tablets", label: "Tablets & E-Readers" },
-  { id: "accessories", label: "Accessories" },
-  { id: "audio", label: "Audio Devices" },
-];
-
 const FilterPanel = ({ onFilterChange, isMobile = false }: FilterPanelProps) => {
-  const [filters, setFilters] = useState<FilterState>(initialState);
+  const [open, setOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 12000]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState(0);
+  const [sortBy, setSortBy] = useState<FilterState['sortBy']>('recommended');
 
-  const handleCategoryChange = (category: string, checked: boolean) => {
-    const updatedCategories = checked
-      ? [...filters.categories, category]
-      : filters.categories.filter((c) => c !== category);
+  // Available categories
+  const availableCategories = [
+    { id: 'phones', label: 'Phones' },
+    { id: 'laptops', label: 'Laptops' },
+    { id: 'tablets', label: 'Tablets' },
+    { id: 'audio', label: 'Audio' },
+    { id: 'accessories', label: 'Accessories' },
+  ];
+
+  // Apply filters
+  const applyFilters = () => {
+    onFilterChange({
+      priceRange,
+      categories,
+      minRating,
+      sortBy,
+    });
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setPriceRange([0, 12000]);
+    setCategories([]);
+    setMinRating(0);
+    setSortBy('recommended');
     
-    const updatedFilters: FilterState = { 
-      ...filters, 
-      categories: updatedCategories 
-    };
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
+    onFilterChange({
+      priceRange: [0, 12000],
+      categories: [],
+      minRating: 0,
+      sortBy: 'recommended',
+    });
   };
 
-  const handleSortChange = (value: string) => {
-    const updatedFilters: FilterState = { ...filters, sortBy: value };
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
+  // Format price to display as EcoCredits
+  const formatPrice = (value: number) => {
+    return `${value}`;
   };
 
-  const handleRatingChange = (rating: number) => {
-    const updatedFilters: FilterState = { ...filters, minRating: rating };
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
+  // Handle category toggle
+  const toggleCategory = (categoryId: string) => {
+    setCategories(prev => 
+      prev.includes(categoryId) 
+        ? prev.filter(id => id !== categoryId) 
+        : [...prev, categoryId]
+    );
   };
 
-  const handlePriceChange = (value: number[]) => {
-    const priceRange: [number, number] = [
-      value[0] || 0,
-      value[1] || 12000
-    ];
-    const updatedFilters: FilterState = { ...filters, priceRange };
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
-  };
+  // Update filters when component mounts
+  useEffect(() => {
+    applyFilters();
+  }, []);
 
-  const clearFilters = () => {
-    setFilters(initialState);
-    onFilterChange(initialState);
-  };
-
-  const renderFilters = () => (
+  const filterContent = (
     <div className="space-y-6">
+      {/* Price Range Filter */}
       <div>
-        <h3 className="font-medium mb-3">Price Range (Credits)</h3>
-        <div className="px-1">
+        <h3 className="font-medium mb-3">Price Range (EcoCredits)</h3>
+        <div className="px-2">
           <Slider
-            defaultValue={filters.priceRange}
+            defaultValue={priceRange}
             min={0}
             max={12000}
             step={100}
-            onValueChange={handlePriceChange}
+            value={priceRange}
+            onValueChange={(value) => setPriceRange(value as [number, number])}
+            className="mb-2"
           />
-          <div className="flex justify-between mt-2 text-sm text-gray-500">
-            <div>{filters.priceRange[0]} Credits</div>
-            <div>{filters.priceRange[1]} Credits</div>
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>{formatPrice(priceRange[0])}</span>
+            <span>{formatPrice(priceRange[1])}</span>
           </div>
         </div>
       </div>
-
+      
+      {/* Category Filter */}
       <div>
         <h3 className="font-medium mb-3">Category</h3>
         <div className="space-y-2">
-          {categories.map((category) => (
+          {availableCategories.map((category) => (
             <div key={category.id} className="flex items-center space-x-2">
-              <Checkbox
+              <Checkbox 
                 id={`category-${category.id}`}
-                checked={filters.categories.includes(category.id)}
-                onCheckedChange={(checked) => 
-                  handleCategoryChange(category.id, checked as boolean)
-                }
+                checked={categories.includes(category.id)}
+                onCheckedChange={() => toggleCategory(category.id)}
               />
-              <Label htmlFor={`category-${category.id}`}>{category.label}</Label>
+              <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
+                {category.label}
+              </Label>
             </div>
           ))}
         </div>
       </div>
-
+      
+      {/* Rating Filter */}
       <div>
         <h3 className="font-medium mb-3">Minimum Rating</h3>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((rating) => (
-            <Button
-              key={rating}
-              variant="outline"
-              size="sm"
-              className={`px-2 ${filters.minRating >= rating ? "bg-primary/10" : ""}`}
-              onClick={() => handleRatingChange(rating)}
-            >
-              <Star
-                className={`h-4 w-4 ${
-                  filters.minRating >= rating ? "fill-primary text-primary" : "text-gray-400"
-                }`}
-              />
-              <span className="ml-1">{rating}+</span>
-            </Button>
-          ))}
-          {filters.minRating > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="px-2"
-              onClick={() => handleRatingChange(0)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
+        <div className="px-2">
+          <Slider
+            defaultValue={[minRating]}
+            min={0}
+            max={5}
+            step={0.5}
+            value={[minRating]}
+            onValueChange={(value) => setMinRating(value[0])}
+            className="mb-2"
+          />
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>0</span>
+            <span>5</span>
+          </div>
+        </div>
+        <div className="text-center text-sm text-primary font-medium mt-1">
+          {minRating} stars & up
         </div>
       </div>
-
+      
+      {/* Sort By */}
       <div>
         <h3 className="font-medium mb-3">Sort By</h3>
-        <RadioGroup
-          value={filters.sortBy}
-          onValueChange={handleSortChange}
-          className="space-y-2"
-        >
-          <div className="flex items-center space-x-2">
+        <RadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as FilterState['sortBy'])}>
+          <div className="flex items-center space-x-2 mb-2">
             <RadioGroupItem value="recommended" id="sort-recommended" />
-            <Label htmlFor="sort-recommended">Recommended</Label>
+            <Label htmlFor="sort-recommended" className="text-sm cursor-pointer">Recommended</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mb-2">
             <RadioGroupItem value="price_low_high" id="sort-price-low" />
-            <Label htmlFor="sort-price-low">Price: Low to High</Label>
+            <Label htmlFor="sort-price-low" className="text-sm cursor-pointer">Price: Low to High</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mb-2">
             <RadioGroupItem value="price_high_low" id="sort-price-high" />
-            <Label htmlFor="sort-price-high">Price: High to Low</Label>
+            <Label htmlFor="sort-price-high" className="text-sm cursor-pointer">Price: High to Low</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mb-2">
             <RadioGroupItem value="rating" id="sort-rating" />
-            <Label htmlFor="sort-rating">Highest Rated</Label>
+            <Label htmlFor="sort-rating" className="text-sm cursor-pointer">Highest Rated</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="newest" id="sort-newest" />
-            <Label htmlFor="sort-newest">Newest First</Label>
+            <Label htmlFor="sort-newest" className="text-sm cursor-pointer">Newest</Label>
           </div>
         </RadioGroup>
+      </div>
+      
+      {/* Filter Actions */}
+      <div className="flex gap-2 pt-2">
+        <Button onClick={applyFilters} className="flex-1">Apply Filters</Button>
+        <Button onClick={resetFilters} variant="outline" className="flex-1">Reset</Button>
       </div>
     </div>
   );
 
   if (isMobile) {
     return (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FilterIcon className="w-4 h-4" />
-            Filter
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <Filter className="w-4 h-4" />
+            Filters
           </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-          <SheetHeader>
-            <SheetTitle className="flex justify-between">
-              <span>Filters</span>
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear All
-              </Button>
-            </SheetTitle>
-          </SheetHeader>
-          <div className="py-4">{renderFilters()}</div>
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button className="w-full">Apply Filters</Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        </DialogTrigger>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SlidersHorizontal className="w-5 h-5" />
+              Filter & Sort
+            </DialogTitle>
+          </DialogHeader>
+          {filterContent}
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="rounded-md border p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold flex items-center">
-          <FilterIcon className="w-4 h-4 mr-2" />
-          Filters
-        </h2>
-        <Button variant="ghost" size="sm" onClick={clearFilters}>
-          Clear All
-        </Button>
-      </div>
-      {renderFilters()}
+    <div className="bg-white p-5 rounded-xl shadow-sm border">
+      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <SlidersHorizontal className="w-5 h-5" />
+        Filter & Sort
+      </h2>
+      {filterContent}
     </div>
   );
 };

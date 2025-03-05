@@ -8,6 +8,11 @@ import Marketplace from './pages/Marketplace';
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "./contexts/CartContext";
 import { Navigate } from 'react-router-dom';
+import Home from './pages/Home';
+import Profile from './pages/Profile';
+import AboutUs from './pages/AboutUs';
+import Admin from './pages/Admin';
+import AiAssistant from './components/AiAssistant';
 
 function App() {
   return (
@@ -15,7 +20,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/marketplace" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Navigate to="/marketplace" replace />} />
             <Route path="/schedule-pickup" element={<SchedulePickup />} />
             <Route path="/my-ecocredits" element={<MyEcoCredits />} />
@@ -23,8 +28,12 @@ function App() {
             <Route path="/signup" element={<Navigate to="/marketplace" replace />} />
             <Route path="/signin" element={<Navigate to="/marketplace" replace />} />
             <Route path="/checkout" element={<Navigate to="/marketplace" replace />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
           <Toaster />
+          <AiAssistant />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
