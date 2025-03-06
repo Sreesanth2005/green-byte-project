@@ -2,9 +2,10 @@
 import React from 'react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ChevronRight, Recycle, Award, Calendar } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 const Home = () => {
   return (
@@ -13,26 +14,7 @@ const Home = () => {
       
       <main>
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-primary/90 to-primary relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/10 bg-[length:20px_20px] opacity-10"></div>
-          <div className="max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col items-center text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Recycle E-Waste, Earn Rewards
-            </h1>
-            <p className="text-xl text-white/80 max-w-3xl mb-8">
-              Join our community to safely dispose of electronic waste, earn EcoCredits, 
-              and make a positive impact on the environment.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90" asChild>
-                <Link to="/schedule-pickup">Schedule a Pickup</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10" asChild>
-                <Link to="/marketplace">Browse Marketplace</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
+        <Hero />
         
         {/* Features Section */}
         <section className="py-20">
@@ -40,36 +22,45 @@ const Home = () => {
             <h2 className="text-3xl font-bold text-center mb-12">How Green Byte Works</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <Recycle className="w-8 h-8 text-primary" />
+              {/* Feature Card 1 */}
+              <div className="bg-white p-8 rounded-xl shadow-sm">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Recycle E-Waste</h3>
+                <h3 className="text-xl font-semibold mb-2">Recycle E-Waste</h3>
                 <p className="text-gray-600">
                   Schedule a pickup for your e-waste or find drop-off locations near you. We handle 
                   proper recycling of all electronic devices.
                 </p>
               </div>
               
-              <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <Award className="w-8 h-8 text-primary" />
+              {/* Feature Card 2 */}
+              <div className="bg-white p-8 rounded-xl shadow-sm">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Earn EcoCredits</h3>
+                <h3 className="text-xl font-semibold mb-2">Earn EcoCredits</h3>
                 <p className="text-gray-600">
                   Receive EcoCredits based on the type and quantity of e-waste you recycle. Track your 
                   environmental impact in real-time.
                 </p>
               </div>
               
-              <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <Calendar className="w-8 h-8 text-primary" />
+              {/* Feature Card 3 */}
+              <div className="bg-white p-8 rounded-xl shadow-sm">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                  </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Join Events</h3>
+                <h3 className="text-xl font-semibold mb-2">Redeem Rewards</h3>
                 <p className="text-gray-600">
-                  Participate in community events, workshops, and initiatives focused on sustainability 
-                  and environmental awareness.
+                  Use your EcoCredits to purchase eco-friendly products, get discounts, or donate to 
+                  environmental causes.
                 </p>
               </div>
             </div>
