@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import AboutUs from './pages/AboutUs';
 import Admin from './pages/Admin';
 import Events from './pages/Events';
+import Analysis from './pages/Analysis';
 import AiAssistant from './components/AiAssistant';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/my-ecocredits" element={<MyEcoCredits />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/analysis" element={<Analysis />} />
             <Route path="/signup" element={<Navigate to="/marketplace" replace />} />
             <Route path="/signin" element={<Navigate to="/marketplace" replace />} />
             <Route path="/checkout" element={<Navigate to="/marketplace" replace />} />

@@ -47,6 +47,7 @@ const Navigation = () => {
           </Link>
           <Link to="/analysis" className="text-sm font-medium hover:text-primary transition-colors">
             Analysis
+            <BarChart2 className="inline ml-1 w-4 h-4" />
           </Link>
           <Link to="/about-us" className="text-sm font-medium hover:text-primary transition-colors">
             About Us
