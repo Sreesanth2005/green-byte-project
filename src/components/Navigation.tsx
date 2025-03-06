@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Recycle, User, Menu, X, BarChart2, Info, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -52,14 +54,28 @@ const Navigation = () => {
           <Link to="/about-us" className="text-sm font-medium hover:text-primary transition-colors">
             About Us
           </Link>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full" asChild>
-            <Link to="/profile">
-              <User className="w-5 h-5" />
-            </Link>
-          </Button>
+          
+          {user ? (
+            <>
+              <Button variant="ghost" size="icon" className="rounded-full" asChild>
+                <Link to="/profile">
+                  <User className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button variant="default" size="sm" asChild>
+                <Link to="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -116,20 +132,41 @@ const Navigation = () => {
             >
               About Us
             </Link>
-            <Link 
-              to="/profile" 
-              className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              My Profile
-            </Link>
-            <div className="pt-2">
-              <Button className="w-full" asChild>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  Login
+            
+            {user ? (
+              <>
+                <Link 
+                  to="/profile" 
+                  className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Profile
                 </Link>
-              </Button>
-            </div>
+                <div className="pt-2">
+                  <Button className="w-full" variant="outline" onClick={() => {
+                    signOut();
+                    setIsMenuOpen(false);
+                  }}>
+                    Logout
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="pt-2">
+                  <Button className="w-full mb-2" variant="outline" asChild>
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                      Login
+                    </Link>
+                  </Button>
+                  <Button className="w-full" asChild>
+                    <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
+                      Sign Up
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

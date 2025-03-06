@@ -15,6 +15,8 @@ import Admin from './pages/Admin';
 import Events from './pages/Events';
 import Analysis from './pages/Analysis';
 import AiAssistant from './components/AiAssistant';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function App() {
   return (
@@ -29,9 +31,8 @@ function App() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/events" element={<Events />} />
             <Route path="/analysis" element={<Analysis />} />
-            <Route path="/signup" element={<Navigate to="/marketplace" replace />} />
-            <Route path="/signin" element={<Navigate to="/marketplace" replace />} />
-            <Route path="/checkout" element={<Navigate to="/marketplace" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/admin" element={<Admin />} />
