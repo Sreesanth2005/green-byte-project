@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Link } from 'react-router-dom';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -150,7 +151,9 @@ const Admin = () => {
         <div className="container mx-auto px-4 py-16 flex items-center justify-center flex-col">
           <h1 className="text-2xl font-bold mb-4">Admin Access Required</h1>
           <p className="text-gray-600 mb-6">You don't have permission to access this page.</p>
-          <Button as="a" href="/marketplace">Return to Marketplace</Button>
+          <Button asChild>
+            <Link to="/marketplace">Return to Marketplace</Link>
+          </Button>
         </div>
         <Footer />
       </div>
