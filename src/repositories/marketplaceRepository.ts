@@ -9,6 +9,7 @@ import {
   countDocuments,
   aggregate
 } from '../lib/mongodbUtils';
+import { PipelineStage } from 'mongoose';
 
 /**
  * Create a new marketplace item
@@ -30,7 +31,7 @@ export async function findItemById(id: string): Promise<IMarketplaceItem | null>
 export async function findItems(
   filter: object = {},
   options: {
-    sort?: object;
+    sort?: { [key: string]: number };
     limit?: number;
     page?: number;
     select?: string;
@@ -115,7 +116,7 @@ export async function getItemsByCategory(
  * Get aggregate statistics about marketplace items
  */
 export async function getMarketplaceStats(): Promise<any> {
-  return await aggregate(MarketplaceItem, [
+  const pipeline: PipelineStage[] = [
     {
       $facet: {
         categoryStats: [
@@ -138,5 +139,7 @@ export async function getMarketplaceStats(): Promise<any> {
         ]
       }
     }
-  ]);
+  ];
+  
+  return await aggregate(MarketplaceItem, pipeline);
 }

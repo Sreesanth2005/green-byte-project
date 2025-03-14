@@ -1,5 +1,5 @@
 
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Document, Model, SortOrder, PopulateOptions, PipelineStage, AggregateOptions } from 'mongoose';
 import { connectToDatabase } from './mongodbClient';
 
 /**
@@ -33,11 +33,11 @@ export async function findDocuments<T extends Document>(
   model: Model<T>,
   filter: object = {},
   options: {
-    sort?: object;
+    sort?: { [key: string]: SortOrder };
     limit?: number;
     skip?: number;
     select?: string;
-    populate?: string | object;
+    populate?: string | PopulateOptions | (string | PopulateOptions)[];
   } = {}
 ): Promise<T[]> {
   try {
@@ -65,7 +65,7 @@ export async function findDocuments<T extends Document>(
       query = query.populate(options.populate);
     }
     
-    return await query.exec();
+    return await query.exec() as T[];
   } catch (error) {
     console.error(`Error finding documents in ${model.modelName}:`, error);
     throw error;
@@ -84,7 +84,7 @@ export async function findOneDocument<T extends Document>(
   filter: object,
   options: {
     select?: string;
-    populate?: string | object;
+    populate?: string | PopulateOptions | (string | PopulateOptions)[];
   } = {}
 ): Promise<T | null> {
   try {
@@ -100,7 +100,7 @@ export async function findOneDocument<T extends Document>(
       query = query.populate(options.populate);
     }
     
-    return await query.exec();
+    return await query.exec() as T | null;
   } catch (error) {
     console.error(`Error finding document in ${model.modelName}:`, error);
     throw error;
@@ -179,7 +179,7 @@ export async function countDocuments<T extends Document>(
  */
 export async function aggregate<T extends Document, R = any>(
   model: Model<T>,
-  pipeline: object[]
+  pipeline: PipelineStage[]
 ): Promise<R[]> {
   try {
     await ensureConnection();

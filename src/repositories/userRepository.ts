@@ -51,7 +51,7 @@ export async function deleteUser(id: string): Promise<boolean> {
 export async function findUsers(
   filter: object = {},
   options: {
-    sort?: object;
+    sort?: { [key: string]: number };
     limit?: number;
     page?: number;
     select?: string;
