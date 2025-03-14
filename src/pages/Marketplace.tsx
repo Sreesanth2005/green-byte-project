@@ -103,7 +103,6 @@ const Marketplace = () => {
     }
     
     try {
-      // Check if item already exists in cart
       const { data: existingItems, error: checkError } = await supabase
         .from('cart_items')
         .select('*')
@@ -113,7 +112,6 @@ const Marketplace = () => {
       if (checkError) throw checkError;
       
       if (existingItems && existingItems.length > 0) {
-        // Update quantity
         const { error } = await supabase
           .from('cart_items')
           .update({ 
@@ -124,7 +122,6 @@ const Marketplace = () => {
           
         if (error) throw error;
       } else {
-        // Insert new item
         const { error } = await supabase
           .from('cart_items')
           .insert([
@@ -143,7 +140,6 @@ const Marketplace = () => {
         description: "Item has been added to your cart.",
       });
       
-      // Update cart count
       fetchCartCount();
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -161,27 +157,22 @@ const Marketplace = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      // Price range filter
       const priceInRange = 
         product.eco_credits >= filters.priceRange[0] && 
         product.eco_credits <= filters.priceRange[1];
       
-      // Category filter
       const matchesCategory = 
         filters.categories.length === 0 || 
         filters.categories.includes(product.category);
       
-      // Rating filter
       const matchesRating = product.rating >= filters.minRating;
       
-      // Search query
       const matchesSearch = searchQuery === "" || 
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
       
       return priceInRange && matchesCategory && matchesRating && matchesSearch;
     }).sort((a, b) => {
-      // Apply sorting
       switch (filters.sortBy) {
         case 'price_low_high':
           return a.eco_credits - b.eco_credits;
@@ -193,7 +184,6 @@ const Marketplace = () => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'recommended':
         default:
-          // Default sorting (recommended)
           return 0;
       }
     });
@@ -225,7 +215,7 @@ const Marketplace = () => {
         .from('feedback')
         .insert([
           { 
-            name: user?.user_metadata?.name || "Anonymous",
+            name: user ? `${user.firstName} ${user.lastName}` : "Anonymous",
             email: user?.email || "anonymous@example.com",
             message: feedback,
             rating,
@@ -258,7 +248,6 @@ const Marketplace = () => {
       <Navigation />
       
       <main className="pt-16">
-        {/* Hero Banner Section */}
         <div className="relative h-[400px] overflow-hidden">
           <div 
             className="flex transition-transform duration-500 ease-in-out"
@@ -297,9 +286,7 @@ const Marketplace = () => {
           </button>
         </div>
 
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-6 py-16">
-          {/* Search and Filter */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4">
             <h2 className="text-3xl font-bold">Featured Products</h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
@@ -332,12 +319,10 @@ const Marketplace = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Desktop Filter Panel */}
             <div className="hidden lg:block">
               <FilterPanel onFilterChange={handleFilterChange} />
             </div>
 
-            {/* Products Grid */}
             <div className="lg:col-span-3">
               {loading ? (
                 <div className="text-center py-12">
@@ -392,7 +377,6 @@ const Marketplace = () => {
           </div>
         </div>
 
-        {/* Feedback Button */}
         <Button
           onClick={() => setShowFeedback(true)}
           className="fixed bottom-20 right-4 rounded-full shadow-lg"
@@ -401,7 +385,6 @@ const Marketplace = () => {
           Give Feedback
         </Button>
 
-        {/* Feedback Modal */}
         {showFeedback && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full">
@@ -447,7 +430,6 @@ const Marketplace = () => {
           </div>
         )}
 
-        {/* Cart Component */}
         <Cart 
           open={showCart} 
           onClose={() => setShowCart(false)} 
