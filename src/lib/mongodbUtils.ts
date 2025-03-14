@@ -10,11 +10,11 @@ import mongoose, {
 } from 'mongoose';
 import { connectToDatabase } from './mongodbClient';
 
+// Type for sort options
+type SortOptions = { [key: string]: SortOrder };
+
 /**
  * Generic function to create a document in MongoDB
- * @param model The mongoose model
- * @param data The data to create
- * @returns The created document
  */
 export async function createDocument<T extends Document>(
   model: Model<T>,
@@ -32,16 +32,12 @@ export async function createDocument<T extends Document>(
 
 /**
  * Generic function to find documents in MongoDB
- * @param model The mongoose model
- * @param filter The filter to apply
- * @param options Optional query options
- * @returns Array of documents
  */
 export async function findDocuments<T extends Document>(
   model: Model<T>,
   filter: object = {},
   options: {
-    sort?: { [key: string]: SortOrder };
+    sort?: SortOptions;
     limit?: number;
     skip?: number;
     select?: string;
@@ -51,7 +47,7 @@ export async function findDocuments<T extends Document>(
   try {
     await ensureConnection();
     
-    let query = model.find(filter);
+    let query: any = model.find(filter);
     
     if (options.sort) {
       query = query.sort(options.sort);
@@ -73,12 +69,12 @@ export async function findDocuments<T extends Document>(
       if (typeof options.populate === 'string') {
         query = query.populate(options.populate);
       } else {
-        query = query.populate(options.populate as PopulateOptions | (string | PopulateOptions)[]);
+        query = query.populate(options.populate);
       }
     }
     
     const result = await query.exec();
-    return result as unknown as T[];
+    return result as T[];
   } catch (error) {
     console.error(`Error finding documents in ${model.modelName}:`, error);
     throw error;
@@ -87,10 +83,6 @@ export async function findDocuments<T extends Document>(
 
 /**
  * Generic function to find a single document in MongoDB
- * @param model The mongoose model
- * @param filter The filter to apply
- * @param options Optional query options
- * @returns Single document or null
  */
 export async function findOneDocument<T extends Document>(
   model: Model<T>,
@@ -103,7 +95,7 @@ export async function findOneDocument<T extends Document>(
   try {
     await ensureConnection();
     
-    let query = model.findOne(filter);
+    let query: any = model.findOne(filter);
     
     if (options.select) {
       query = query.select(options.select);
@@ -113,12 +105,12 @@ export async function findOneDocument<T extends Document>(
       if (typeof options.populate === 'string') {
         query = query.populate(options.populate);
       } else {
-        query = query.populate(options.populate as PopulateOptions | (string | PopulateOptions)[]);
+        query = query.populate(options.populate);
       }
     }
     
     const result = await query.exec();
-    return result as unknown as T | null;
+    return result as T | null;
   } catch (error) {
     console.error(`Error finding document in ${model.modelName}:`, error);
     throw error;
@@ -127,10 +119,6 @@ export async function findOneDocument<T extends Document>(
 
 /**
  * Generic function to update a document in MongoDB
- * @param model The mongoose model
- * @param filter The filter to apply
- * @param update The update to apply
- * @returns The updated document
  */
 export async function updateDocument<T extends Document>(
   model: Model<T>,
@@ -143,7 +131,7 @@ export async function updateDocument<T extends Document>(
 ): Promise<T | null> {
   try {
     await ensureConnection();
-    return await model.findOneAndUpdate(filter, update, options).exec();
+    return await model.findOneAndUpdate(filter, update, options).exec() as T | null;
   } catch (error) {
     console.error(`Error updating document in ${model.modelName}:`, error);
     throw error;
@@ -152,9 +140,6 @@ export async function updateDocument<T extends Document>(
 
 /**
  * Generic function to delete a document in MongoDB
- * @param model The mongoose model
- * @param filter The filter to apply
- * @returns Deletion result
  */
 export async function deleteDocument<T extends Document>(
   model: Model<T>,
@@ -172,9 +157,6 @@ export async function deleteDocument<T extends Document>(
 
 /**
  * Function to count documents in MongoDB
- * @param model The mongoose model
- * @param filter The filter to apply
- * @returns Count of documents
  */
 export async function countDocuments<T extends Document>(
   model: Model<T>,
@@ -191,9 +173,6 @@ export async function countDocuments<T extends Document>(
 
 /**
  * Function to perform aggregation in MongoDB
- * @param model The mongoose model
- * @param pipeline The aggregation pipeline
- * @returns Aggregation result
  */
 export async function aggregate<T extends Document, R = any>(
   model: Model<T>,
