@@ -1,8 +1,12 @@
 
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-// MongoDB connection URI - this would typically be in an environment variable
-const MONGODB_URI = 'mongodb+srv://username:password@cluster0.mongodb.net/greenByte?retryWrites=true&w=majority';
+// Load environment variables
+dotenv.config();
+
+// MongoDB connection URI from environment variables
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/greenByte';
 
 // Initialize connection
 export const connectToDatabase = async () => {
