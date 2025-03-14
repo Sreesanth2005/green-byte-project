@@ -8,6 +8,7 @@ import {
   deleteDocument,
   countDocuments
 } from '../lib/mongodbUtils';
+import { SortOrder } from 'mongoose';
 
 /**
  * Create a new user
@@ -51,13 +52,13 @@ export async function deleteUser(id: string): Promise<boolean> {
 export async function findUsers(
   filter: object = {},
   options: {
-    sort?: { [key: string]: number };
+    sort?: { [key: string]: SortOrder };
     limit?: number;
     page?: number;
     select?: string;
   } = {}
 ): Promise<{ users: IUser[]; total: number; pages: number }> {
-  const { sort = { createdAt: -1 }, limit = 10, page = 1, select = '-password' } = options;
+  const { sort = { createdAt: -1 as SortOrder }, limit = 10, page = 1, select = '-password' } = options;
   const skip = (page - 1) * limit;
   
   const [users, total] = await Promise.all([

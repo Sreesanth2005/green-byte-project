@@ -9,7 +9,7 @@ import {
   countDocuments,
   aggregate
 } from '../lib/mongodbUtils';
-import { PipelineStage } from 'mongoose';
+import { PipelineStage, SortOrder } from 'mongoose';
 
 /**
  * Create a new marketplace item
@@ -31,13 +31,13 @@ export async function findItemById(id: string): Promise<IMarketplaceItem | null>
 export async function findItems(
   filter: object = {},
   options: {
-    sort?: { [key: string]: number };
+    sort?: { [key: string]: SortOrder };
     limit?: number;
     page?: number;
     select?: string;
   } = {}
 ): Promise<{ items: IMarketplaceItem[]; total: number; pages: number }> {
-  const { sort = { createdAt: -1 }, limit = 12, page = 1, select } = options;
+  const { sort = { createdAt: -1 as SortOrder }, limit = 12, page = 1, select } = options;
   const skip = (page - 1) * limit;
   
   const [items, total] = await Promise.all([
@@ -108,7 +108,7 @@ export async function getItemsByCategory(
 ): Promise<{ items: IMarketplaceItem[]; total: number; pages: number }> {
   return await findItems(
     { category, isSold: false },
-    { page, limit, sort: { createdAt: -1 } }
+    { page, limit, sort: { createdAt: -1 as SortOrder } }
   );
 }
 

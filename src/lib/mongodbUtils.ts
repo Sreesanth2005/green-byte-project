@@ -1,5 +1,13 @@
 
-import mongoose, { Document, Model, SortOrder, PopulateOptions, PipelineStage, AggregateOptions } from 'mongoose';
+import mongoose, { 
+  Document, 
+  Model, 
+  SortOrder, 
+  PopulateOptions, 
+  PipelineStage, 
+  AggregateOptions,
+  Query
+} from 'mongoose';
 import { connectToDatabase } from './mongodbClient';
 
 /**
@@ -62,10 +70,15 @@ export async function findDocuments<T extends Document>(
     }
     
     if (options.populate) {
-      query = query.populate(options.populate);
+      if (typeof options.populate === 'string') {
+        query = query.populate(options.populate);
+      } else {
+        query = query.populate(options.populate as PopulateOptions | (string | PopulateOptions)[]);
+      }
     }
     
-    return await query.exec() as T[];
+    const result = await query.exec();
+    return result as unknown as T[];
   } catch (error) {
     console.error(`Error finding documents in ${model.modelName}:`, error);
     throw error;
@@ -97,10 +110,15 @@ export async function findOneDocument<T extends Document>(
     }
     
     if (options.populate) {
-      query = query.populate(options.populate);
+      if (typeof options.populate === 'string') {
+        query = query.populate(options.populate);
+      } else {
+        query = query.populate(options.populate as PopulateOptions | (string | PopulateOptions)[]);
+      }
     }
     
-    return await query.exec() as T | null;
+    const result = await query.exec();
+    return result as unknown as T | null;
   } catch (error) {
     console.error(`Error finding document in ${model.modelName}:`, error);
     throw error;
