@@ -6,23 +6,11 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Calendar, Clock, Users, Search } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  event_date: string;
-  event_time: string;
-  location: string;
-  max_participants: number;
-  current_participants: number;
-  image_url: string;
-}
+import mockDatabase, { MockEvent } from "@/utils/mockDatabase";
 
 const Events = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<MockEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -37,19 +25,15 @@ const Events = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: true });
-        
-      if (error) throw error;
+      // Use mock database instead of supabase
+      const { events } = mockDatabase.getAllEvents();
+      setEvents(events);
       
-      setEvents(data || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error fetching events",
-        description: error.message
+        description: error.message || "Could not load events"
       });
     } finally {
       setLoading(false);

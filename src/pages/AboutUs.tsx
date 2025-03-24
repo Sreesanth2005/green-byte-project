@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Recycle, Leaf, Truck, Globe, Award, Heart } from 'lucide-react';
+import TeamSection from "@/components/TeamSection";
 
 const AboutUs = () => {
   return (
@@ -140,43 +141,7 @@ const AboutUs = () => {
         </section>
         
         {/* Our Team */}
-        <section className="py-16 px-6 bg-gray-100">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold mb-12 text-center">Meet Our Team</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                <div className="h-48 bg-gray-200"></div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-xl mb-1">Rahul Sharma</h3>
-                  <p className="text-primary mb-3">Founder & CEO</p>
-                  <p className="text-gray-600">
-                    With 15+ years in sustainability and tech, Rahul founded GreenByte to create a practical solution to the growing e-waste problem.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                <div className="h-48 bg-gray-200"></div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-xl mb-1">Priya Patel</h3>
-                  <p className="text-primary mb-3">Head of Operations</p>
-                  <p className="text-gray-600">
-                    Priya manages our recycling operations, ensuring efficient pickup services and quality control for all refurbished products.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-                <div className="h-48 bg-gray-200"></div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-xl mb-1">Arjun Mehta</h3>
-                  <p className="text-primary mb-3">Sustainability Director</p>
-                  <p className="text-gray-600">
-                    Arjun oversees our environmental impact metrics and develops partnerships to expand our recycling initiatives.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <TeamSection />
         
         {/* CTA */}
         <section className="py-16 px-6 bg-primary text-white text-center">

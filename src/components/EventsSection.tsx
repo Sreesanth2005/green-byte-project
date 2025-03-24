@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
+import mockDatabase, { MockEvent } from "@/utils/mockDatabase";
 
 const EventsSection = () => {
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<MockEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -18,15 +18,12 @@ const EventsSection = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: true })
-        .limit(3);
-        
-      if (error) throw error;
       
-      setEvents(data || []);
+      // Use mock database instead of supabase
+      const { events } = mockDatabase.getAllEvents();
+      // Only take the first 3 events
+      setEvents(events.slice(0, 3));
+      
     } catch (error) {
       console.error("Error fetching events:", error);
       toast({
@@ -34,45 +31,18 @@ const EventsSection = () => {
         description: "Failed to load events. Please try again later.",
         variant: "destructive",
       });
-      // Use fallback data if fetch fails
-      setEvents([
-        {
-          id: "1",
-          title: "E-Waste Collection Drive",
-          event_date: "2024-03-15",
-          location: "Central Park, New York",
-          image_url: "https://images.unsplash.com/photo-1576267423048-15c0040fec78?w=800&h=400&fit=crop",
-          description: "Join us for our biggest e-waste collection event of the year. Bring your old electronics and earn extra EcoCredits!",
-        },
-        {
-          id: "2",
-          title: "Sustainability Workshop",
-          event_date: "2024-03-20",
-          location: "Tech Hub, San Francisco",
-          image_url: "https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&h=400&fit=crop",
-          description: "Learn about sustainable technology practices and how to reduce your electronic waste footprint.",
-        },
-        {
-          id: "3",
-          title: "Community Recycling Day",
-          event_date: "2024-03-25",
-          location: "Civic Center, Chicago",
-          image_url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&h=400&fit=crop",
-          description: "A community event focused on electronics recycling education and collection.",
-        },
-      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const options = { year: 'numeric' as const, month: 'long' as const, day: 'numeric' as const };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
-    <section className="py-24 bg-secondary">
+    <section className="py-24 bg-secondary/20">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold mb-4">Upcoming Events</h2>
@@ -97,7 +67,7 @@ const EventsSection = () => {
                   />
                   <div className="p-6">
                     <h3 className="font-semibold text-xl mb-2">{event.title}</h3>
-                    <p className="text-gray-600 mb-4">{event.description}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
                     <div className="space-y-2">
                       <div className="flex items-center text-gray-600">
                         <Calendar className="w-4 h-4 mr-2" />

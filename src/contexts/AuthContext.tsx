@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import mockDatabase from '@/utils/mockDatabase';
 
 type User = {
   id: string;
@@ -53,30 +54,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // Use mock database instead of API call
+      const result = mockDatabase.loginUser(email, password);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
+      if (result.error) {
         toast({
           title: 'Login failed',
-          description: data.message || 'Please check your credentials and try again.',
+          description: result.error,
           variant: 'destructive',
         });
-        return { error: data };
+        return { error: result.error };
       }
       
       // Save user to state and localStorage
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      setUser(result.user as User);
+      setToken(result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
+      localStorage.setItem('token', result.token);
       
       toast({
         title: 'Login successful',
@@ -96,33 +90,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { firstName: string; lastName: string }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          email,
-          password,
-        }),
+      // Use mock database instead of API call
+      const result = mockDatabase.registerUser({
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email,
+        password,
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
+      if (result.error) {
         toast({
           title: 'Sign up failed',
-          description: data.message || 'Please check your information and try again.',
+          description: result.error,
           variant: 'destructive',
         });
-        return { error: data };
+        return { error: result.error };
       }
       
       toast({
         title: 'Account created successfully!',
-        description: 'You can now log in with your credentials.',
+        description: 'You can now log in with your credentials. As a welcome bonus, 5000 EcoCredits have been added to your account!',
       });
       
       return { error: null };
@@ -158,27 +145,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshUser = async () => {
-    if (!token) return;
+    if (!token || !user) return;
     
     try {
-      const response = await fetch('http://localhost:5000/api/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // Use mock database instead of API call
+      const result = mockDatabase.getUserById(user.id);
       
-      if (response.ok) {
-        const userData = await response.json();
-        setUser({
-          id: userData._id,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          email: userData.email,
-          ecoCredits: userData.ecoCredits,
-        });
-        localStorage.setItem('user', JSON.stringify(userData));
+      if (result.user) {
+        setUser(result.user as User);
+        localStorage.setItem('user', JSON.stringify(result.user));
       } else {
-        // If the token is invalid, sign out
+        // If the user is not found, sign out
         signOut();
       }
     } catch (error) {
