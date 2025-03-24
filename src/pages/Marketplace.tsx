@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -5,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Search, Star, ChevronLeft, ChevronRight, MessageSquare, ShoppingCart } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 import FilterPanel, { FilterState } from "@/components/FilterPanel";
 import Cart from "@/components/Cart";
 import { useAuth } from "@/contexts/AuthContext";
+import { mockDatabase } from "@/utils/mockDatabase";
 
 const Marketplace = () => {
   const [activeBanner, setActiveBanner] = useState(0);
@@ -56,13 +57,9 @@ const Marketplace = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('marketplace_items')
-        .select('*');
-        
-      if (error) throw error;
-      
-      setProducts(data || []);
+      // Instead of fetching from Supabase, use our mock data
+      const { products } = mockDatabase.getAllProducts();
+      setProducts(products || []);
     } catch (error) {
       console.error("Error fetching products:", error);
       toast({
@@ -78,18 +75,8 @@ const Marketplace = () => {
   const fetchCartCount = async () => {
     if (!user) return;
     
-    try {
-      const { count, error } = await supabase
-        .from('cart_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      setCartItemsCount(count || 0);
-    } catch (error) {
-      console.error("Error fetching cart count:", error);
-    }
+    // For now, we'll just set a mock cart count
+    setCartItemsCount(3);
   };
 
   const addToCart = async (productId: string) => {
@@ -102,53 +89,12 @@ const Marketplace = () => {
       return;
     }
     
-    try {
-      const { data: existingItems, error: checkError } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('product_id', productId);
-        
-      if (checkError) throw checkError;
-      
-      if (existingItems && existingItems.length > 0) {
-        const { error } = await supabase
-          .from('cart_items')
-          .update({ 
-            quantity: existingItems[0].quantity + 1,
-            updated_at: new Date()
-          })
-          .eq('id', existingItems[0].id);
-          
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('cart_items')
-          .insert([
-            { 
-              user_id: user.id, 
-              product_id: productId,
-              quantity: 1
-            }
-          ]);
-          
-        if (error) throw error;
-      }
-      
-      toast({
-        title: "Added to Cart",
-        description: "Item has been added to your cart.",
-      });
-      
-      fetchCartCount();
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast({
-        title: "Failed to add item",
-        description: "An error occurred. Please try again.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Added to Cart",
+      description: "Item has been added to your cart.",
+    });
+    
+    setCartItemsCount(prev => prev + 1);
   };
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -158,14 +104,15 @@ const Marketplace = () => {
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const priceInRange = 
-        product.eco_credits >= filters.priceRange[0] && 
-        product.eco_credits <= filters.priceRange[1];
+        product.ecoCredits >= filters.priceRange[0] && 
+        product.ecoCredits <= filters.priceRange[1];
       
       const matchesCategory = 
         filters.categories.length === 0 || 
-        filters.categories.includes(product.category);
+        filters.categories.includes(product.category.toLowerCase());
       
-      const matchesRating = product.rating >= filters.minRating;
+      const matchesRating = 
+        (product.rating || 0) >= filters.minRating;
       
       const matchesSearch = searchQuery === "" || 
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -175,13 +122,13 @@ const Marketplace = () => {
     }).sort((a, b) => {
       switch (filters.sortBy) {
         case 'price_low_high':
-          return a.eco_credits - b.eco_credits;
+          return a.ecoCredits - b.ecoCredits;
         case 'price_high_low':
-          return b.eco_credits - a.eco_credits;
+          return b.ecoCredits - a.ecoCredits;
         case 'rating':
-          return b.rating - a.rating;
+          return (b.rating || 0) - (a.rating || 0);
         case 'newest':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return 0; // No timestamp in mock data
         case 'recommended':
         default:
           return 0;
@@ -210,37 +157,14 @@ const Marketplace = () => {
       return;
     }
     
-    try {
-      const { error } = await supabase
-        .from('feedback')
-        .insert([
-          { 
-            name: user ? `${user.firstName} ${user.lastName}` : "Anonymous",
-            email: user?.email || "anonymous@example.com",
-            message: feedback,
-            rating,
-            user_id: user?.id
-          }
-        ]);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Feedback submitted",
-        description: "Thank you for your feedback!",
-      });
-      
-      setShowFeedback(false);
-      setRating(0);
-      setFeedback("");
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      toast({
-        title: "Failed to submit feedback",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Feedback submitted",
+      description: "Thank you for your feedback!",
+    });
+    
+    setShowFeedback(false);
+    setRating(0);
+    setFeedback("");
   };
 
   return (
@@ -335,7 +259,7 @@ const Marketplace = () => {
                     <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                       <Link to={`/product/${product.id}`} className="block">
                         <img
-                          src={product.image_url}
+                          src={product.image}
                           alt={product.name}
                           className="w-full h-48 object-cover"
                         />
@@ -350,7 +274,7 @@ const Marketplace = () => {
                           </div>
                           <div className="flex items-center justify-between">
                             <div>
-                              <span className="text-xl font-semibold">{product.eco_credits} Credits</span>
+                              <span className="text-xl font-semibold">{product.ecoCredits} Credits</span>
                               <p className="text-xs text-gray-500">(₹{product.price})</p>
                             </div>
                           </div>
