@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import FilterPanel, { FilterState } from "@/components/FilterPanel";
 import Cart from "@/components/Cart";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockDatabase } from "@/utils/mockDatabase";
+import mockDatabase from "@/utils/mockDatabase";
 
 const Marketplace = () => {
   const [activeBanner, setActiveBanner] = useState(0);
@@ -57,7 +57,6 @@ const Marketplace = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Instead of fetching from Supabase, use our mock data
       const { products } = mockDatabase.getAllProducts();
       setProducts(products || []);
     } catch (error) {
@@ -75,8 +74,19 @@ const Marketplace = () => {
   const fetchCartCount = async () => {
     if (!user) return;
     
-    // For now, we'll just set a mock cart count
-    setCartItemsCount(3);
+    try {
+      const { cartItems, error } = mockDatabase.getCart(user.id);
+      
+      if (error) {
+        console.error("Error fetching cart:", error);
+        return;
+      }
+      
+      const count = cartItems.reduce((total, item) => total + item.quantity, 0);
+      setCartItemsCount(count);
+    } catch (error) {
+      console.error("Error calculating cart count:", error);
+    }
   };
 
   const addToCart = async (productId: string) => {
@@ -89,12 +99,27 @@ const Marketplace = () => {
       return;
     }
     
-    toast({
-      title: "Added to Cart",
-      description: "Item has been added to your cart.",
-    });
-    
-    setCartItemsCount(prev => prev + 1);
+    try {
+      const result = mockDatabase.addToCart(user.id, productId, 1);
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast({
+        title: "Added to Cart",
+        description: "Item has been added to your cart.",
+      });
+      
+      // Update cart count
+      fetchCartCount();
+    } catch (error: any) {
+      toast({
+        title: "Failed to add to cart",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -128,7 +153,7 @@ const Marketplace = () => {
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
         case 'newest':
-          return 0; // No timestamp in mock data
+          return Date.parse(b.createdAt) - Date.parse(a.createdAt);
         case 'recommended':
         default:
           return 0;

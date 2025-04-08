@@ -1,642 +1,1019 @@
 
-// Sample database arrays for the application
+// Mock database for frontend development
 
-// User data store
+// Types for our mock data
 export interface MockUser {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   password: string; // In a real app, this would be hashed
+  phone?: string;
+  streetAddress?: string;
+  apartmentNumber?: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
+  avatarUrl?: string;
   ecoCredits: number;
-  createdAt: Date;
+  level: string;
+  createdAt: string;
+  updatedAt: string;
+  registeredEvents: string[];
+  orders: MockOrder[];
+  cart: MockCartItem[];
 }
 
-let users: MockUser[] = [
-  {
-    id: "1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-    password: "password123",
-    ecoCredits: 2500,
-    createdAt: new Date('2023-11-10')
-  },
-  {
-    id: "2",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane@example.com",
-    password: "password123",
-    ecoCredits: 3800,
-    createdAt: new Date('2023-12-05')
-  },
-  {
-    id: "3",
-    firstName: "Alice",
-    lastName: "Johnson",
-    email: "alice@example.com",
-    password: "password123",
-    ecoCredits: 1250,
-    createdAt: new Date('2024-01-15')
-  }
-];
-
-// Products for marketplace
 export interface MockProduct {
   id: string;
   name: string;
   description: string;
-  category: string;
-  condition: string;
   price: number;
   ecoCredits: number;
   image: string;
+  category: string;
+  condition: string;
+  specs: string[];
   stock: number;
-  rating?: number;
-  reviews?: number;
+  rating: number;
+  reviews: number;
+  seller: string;
+  createdAt: string;
 }
 
-let products: MockProduct[] = [
-  {
-    id: "1",
-    name: "Refurbished MacBook Pro 13-inch",
-    description: "This refurbished MacBook Pro features the Apple M1 chip with 8-core CPU, 8GB unified memory, and 256GB SSD storage.",
-    category: "Laptops",
-    condition: "Excellent",
-    price: 999.99,
-    ecoCredits: 9999,
-    image: "https://images.unsplash.com/photo-1537498425277-c283d32ef9db?w=500&h=350&fit=crop",
-    stock: 5,
-    rating: 4.8,
-    reviews: 245
-  },
-  {
-    id: "2",
-    name: "Refurbished iPhone 13",
-    description: "Apple iPhone 13 with 128GB storage, A15 Bionic chip, and dual 12MP camera system. Fully tested and in excellent condition.",
-    category: "Phones",
-    condition: "Very Good",
-    price: 649.99,
-    ecoCredits: 6499,
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=350&fit=crop",
-    stock: 8,
-    rating: 4.7,
-    reviews: 189
-  },
-  {
-    id: "3",
-    name: "iPad Air (2022)",
-    description: "Refurbished iPad Air with 10.9-inch Liquid Retina display, Apple M1 chip, and 64GB storage. Perfect for work and entertainment.",
-    category: "Tablets",
-    condition: "Like New",
-    price: 499.99,
-    ecoCredits: 4999,
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=350&fit=crop",
-    stock: 12,
-    rating: 4.9,
-    reviews: 97
-  },
-  {
-    id: "4",
-    name: "Sony WH-1000XM4 Headphones",
-    description: "Industry-leading noise cancellation headphones with exceptional sound quality, 30-hour battery life, and multipoint connection.",
-    category: "Audio",
-    condition: "Excellent",
-    price: 249.99,
-    ecoCredits: 2499,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=350&fit=crop",
-    stock: 15,
-    rating: 4.8,
-    reviews: 312
-  },
-  {
-    id: "5",
-    name: "Samsung Galaxy Watch 5",
-    description: "Refurbished smartwatch with health tracking features, sleep analysis, and up to 50 hours of battery life. Water-resistant design.",
-    category: "Wearables",
-    condition: "Very Good",
-    price: 179.99,
-    ecoCredits: 1799,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=350&fit=crop",
-    stock: 7,
-    rating: 4.6,
-    reviews: 143
-  },
-  {
-    id: "6",
-    name: "JBL Flip 6 Bluetooth Speaker",
-    description: "Portable waterproof speaker with bold sound, 12-hour battery life, and durable design. Connect multiple speakers for stereo sound.",
-    category: "Audio",
-    condition: "Good",
-    price: 89.99,
-    ecoCredits: 899,
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&h=350&fit=crop",
-    stock: 10,
-    rating: 4.5,
-    reviews: 218
-  },
-  {
-    id: "7",
-    name: "Dell XPS 15 Laptop",
-    description: "Refurbished Dell XPS 15 with 11th Gen Intel Core i7, 16GB RAM, 512GB SSD, and NVIDIA GeForce RTX 3050Ti. Ideal for creative professionals.",
-    category: "Laptops",
-    condition: "Very Good",
-    price: 1299.99,
-    ecoCredits: 12999,
-    image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=500&h=350&fit=crop",
-    stock: 3,
-    rating: 4.7,
-    reviews: 156
-  },
-  {
-    id: "8",
-    name: "Google Pixel 6",
-    description: "Refurbished Google Pixel 6 with 128GB storage, powerful camera system, and Google Tensor chip for fast performance.",
-    category: "Phones",
-    condition: "Good",
-    price: 399.99,
-    ecoCredits: 3999,
-    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=350&fit=crop",
-    stock: 6,
-    rating: 4.5,
-    reviews: 178
-  },
-  {
-    id: "9",
-    name: "Nintendo Switch OLED",
-    description: "Refurbished Nintendo Switch with vibrant 7-inch OLED screen, enhanced audio, and 64GB internal storage. Includes dock and Joy-Con controllers.",
-    category: "Gaming",
-    condition: "Excellent",
-    price: 289.99,
-    ecoCredits: 2899,
-    image: "https://images.unsplash.com/photo-1578303696539-9e6c6d493e8b?w=500&h=350&fit=crop",
-    stock: 4,
-    rating: 4.8,
-    reviews: 204
-  },
-  {
-    id: "10",
-    name: "Samsung 32-inch 4K Monitor",
-    description: "High-resolution 4K UHD monitor with exceptional color accuracy and HDR support. Ideal for creative work and content consumption.",
-    category: "Monitors",
-    condition: "Very Good",
-    price: 349.99,
-    ecoCredits: 3499,
-    image: "https://images.unsplash.com/photo-1527443060795-0f95e6745778?w=500&h=350&fit=crop",
-    stock: 8,
-    rating: 4.6,
-    reviews: 132
-  },
-  {
-    id: "11",
-    name: "Logitech MX Master 3 Mouse",
-    description: "Advanced wireless mouse with precise scrolling, customizable buttons, and ergonomic design. Compatible with Windows, macOS, and Linux.",
-    category: "Accessories",
-    condition: "Like New",
-    price: 79.99,
-    ecoCredits: 799,
-    image: "https://images.unsplash.com/photo-1605773527852-c546a8584ea3?w=500&h=350&fit=crop",
-    stock: 14,
-    rating: 4.9,
-    reviews: 275
-  },
-  {
-    id: "12",
-    name: "GoPro HERO10 Black",
-    description: "Refurbished action camera with 5.3K video recording, 23MP photos, and improved stabilization. Waterproof and durable for all adventures.",
-    category: "Cameras",
-    condition: "Excellent",
-    price: 329.99,
-    ecoCredits: 3299,
-    image: "https://images.unsplash.com/photo-1563884072595-24a1d9dd5506?w=500&h=350&fit=crop",
-    stock: 5,
-    rating: 4.7,
-    reviews: 143
-  },
-  {
-    id: "13",
-    name: "Kindle Paperwhite (2021)",
-    description: "6.8-inch display with adjustable warm light, 8GB storage, and waterproof design. Perfect for reading anywhere, day or night.",
-    category: "E-readers",
-    condition: "Very Good",
-    price: 109.99,
-    ecoCredits: 1099,
-    image: "https://images.unsplash.com/photo-1544159456-38ca8dc1d03c?w=500&h=350&fit=crop",
-    stock: 9,
-    rating: 4.8,
-    reviews: 187
-  },
-  {
-    id: "14",
-    name: "Bose QuietComfort 45 Headphones",
-    description: "Refurbished noise-cancelling headphones with high-fidelity audio, 24-hour battery life, and comfortable fit for all-day listening.",
-    category: "Audio",
-    condition: "Excellent",
-    price: 229.99,
-    ecoCredits: 2299,
-    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&h=350&fit=crop",
-    stock: 7,
-    rating: 4.7,
-    reviews: 198
-  },
-  {
-    id: "15",
-    name: "iPad Pro 11-inch (2021)",
-    description: "Refurbished iPad Pro with M1 chip, Liquid Retina display, and 128GB storage. Perfect for creative work and professional applications.",
-    category: "Tablets",
-    condition: "Very Good",
-    price: 699.99,
-    ecoCredits: 6999,
-    image: "https://images.unsplash.com/photo-1590051833219-8e2ae5846d21?w=500&h=350&fit=crop",
-    stock: 4,
-    rating: 4.9,
-    reviews: 156
-  },
-  {
-    id: "16",
-    name: "Mechanical Keyboard",
-    description: "RGB mechanical keyboard with tactile switches, customizable backlighting, and durable aluminum construction. Ideal for gaming and typing.",
-    category: "Accessories",
-    condition: "Excellent",
-    price: 89.99,
-    ecoCredits: 899,
-    image: "https://images.unsplash.com/photo-1595044426077-d36d9236d44a?w=500&h=350&fit=crop",
-    stock: 11,
-    rating: 4.6,
-    reviews: 224
-  },
-  {
-    id: "17",
-    name: "Dyson Air Purifier",
-    description: "Refurbished air purifier with HEPA filter, air quality monitoring, and quiet operation. Removes allergens and pollutants from your space.",
-    category: "Appliances",
-    condition: "Very Good",
-    price: 399.99,
-    ecoCredits: 3999,
-    image: "https://images.unsplash.com/photo-1585155967849-91c736589c84?w=500&h=350&fit=crop",
-    stock: 3,
-    rating: 4.7,
-    reviews: 118
-  },
-  {
-    id: "18",
-    name: "Samsung Galaxy Tab S7",
-    description: "11-inch tablet with Snapdragon 865+ processor, 6GB RAM, and 128GB storage. Includes S Pen for drawing and note-taking.",
-    category: "Tablets",
-    condition: "Good",
-    price: 449.99,
-    ecoCredits: 4499,
-    image: "https://images.unsplash.com/photo-1589739900266-4853e720bc31?w=500&h=350&fit=crop",
-    stock: 6,
-    rating: 4.5,
-    reviews: 131
-  },
-  {
-    id: "19",
-    name: "Sonos One Smart Speaker",
-    description: "Refurbished smart speaker with rich, room-filling sound and voice control. Works with multiple streaming services and smart home systems.",
-    category: "Audio",
-    condition: "Excellent",
-    price: 159.99,
-    ecoCredits: 1599,
-    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&h=350&fit=crop",
-    stock: 8,
-    rating: 4.8,
-    reviews: 186
-  },
-  {
-    id: "20",
-    name: "Fitbit Sense Advanced Smartwatch",
-    description: "Health and fitness smartwatch with EDA scan app, ECG app, skin temperature, and built-in GPS. Tracks activity, sleep, and stress.",
-    category: "Wearables",
-    condition: "Very Good",
-    price: 199.99,
-    ecoCredits: 1999,
-    image: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=500&h=350&fit=crop",
-    stock: 9,
-    rating: 4.6,
-    reviews: 154
-  }
-];
-
-// Events data
 export interface MockEvent {
   id: string;
   title: string;
   description: string;
-  event_date: string;
-  event_time: string;
+  date: string;
+  time: string;
   location: string;
-  max_participants: number;
-  current_participants: number;
-  image_url: string;
+  image: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  type: string;
+  ecoCreditsReward: number;
+  organizer: string;
 }
 
-let events: MockEvent[] = [
-  {
-    id: "1",
-    title: "E-Waste Collection Drive",
-    description: "Join us for our biggest e-waste collection event of the year. Bring your old electronics and earn extra EcoCredits! We'll have experts on hand to evaluate your items and explain the recycling process.",
-    event_date: "2024-06-15",
-    event_time: "10:00 AM - 4:00 PM",
-    location: "Central Park, New York",
-    max_participants: 100,
-    current_participants: 65,
-    image_url: "https://images.unsplash.com/photo-1576267423048-15c0040fec78?w=800&h=400&fit=crop"
-  },
-  {
-    id: "2",
-    title: "Sustainable Tech Workshop",
-    description: "Learn how to extend the life of your devices and make sustainable tech choices. This hands-on workshop will cover basic repairs, maintenance tips, and ways to reduce your electronic waste footprint.",
-    event_date: "2024-06-22",
-    event_time: "1:00 PM - 3:00 PM",
-    location: "Tech Hub, San Francisco",
-    max_participants: 30,
-    current_participants: 22,
-    image_url: "https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&h=400&fit=crop"
-  },
-  {
-    id: "3",
-    title: "Community Recycling Day",
-    description: "A neighborhood initiative to promote responsible disposal of electronic waste. We'll have collection stations for various types of electronics and educational sessions about the importance of e-waste recycling.",
-    event_date: "2024-07-08",
-    event_time: "9:00 AM - 1:00 PM",
-    location: "Community Center, Chicago",
-    max_participants: 75,
-    current_participants: 45,
-    image_url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&h=400&fit=crop"
-  },
-  {
-    id: "4",
-    title: "Electronics Repair Cafe",
-    description: "Bring your broken electronics and learn how to fix them with the help of our expert volunteers. This event aims to promote repair culture and reduce unnecessary waste.",
-    event_date: "2024-07-15",
-    event_time: "11:00 AM - 5:00 PM",
-    location: "Maker Space, Austin",
-    max_participants: 40,
-    current_participants: 18,
-    image_url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop"
-  },
-  {
-    id: "5",
-    title: "Corporate E-Waste Program Launch",
-    description: "Introducing our new corporate partnership program for large-scale e-waste management. Learn how your company can benefit from sustainable disposal practices and earn EcoCredits.",
-    event_date: "2024-08-05",
-    event_time: "9:00 AM - 11:00 AM",
-    location: "Business Center, Seattle",
-    max_participants: 50,
-    current_participants: 32,
-    image_url: "https://images.unsplash.com/photo-1573167507387-6b4b98cb7c13?w=800&h=400&fit=crop"
-  }
-];
-
-// Eco Tips for Analysis page and chatbot
 export interface MockEcoTip {
   id: string;
   title: string;
   content: string;
   category: string;
-  imageUrl?: string;
+  impact: "low" | "medium" | "high";
+  imageUrl: string;
 }
 
-let ecoTips: MockEcoTip[] = [
+export interface MockOrder {
+  id: string;
+  userId: string;
+  products: {
+    productId: string;
+    quantity: number;
+    price: number;
+    ecoCredits: number;
+  }[];
+  totalPrice: number;
+  totalEcoCredits: number;
+  status: "pending" | "completed" | "cancelled";
+  createdAt: string;
+}
+
+export interface MockCartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+}
+
+// Mock data
+const users: MockUser[] = [
   {
-    id: "1",
-    title: "Extend Device Lifespan",
-    content: "Regularly clean your devices, update software, and use protective cases to extend their lifespan. This reduces the frequency of replacements and saves resources.",
-    category: "Electronics",
-    imageUrl: "https://images.unsplash.com/photo-1598986646512-9330bcc4c0dc?w=500&h=350&fit=crop"
+    id: "u1",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john@example.com",
+    password: "password123",
+    phone: "9876543210",
+    streetAddress: "123 Green Street",
+    city: "Eco City",
+    state: "Green State",
+    pinCode: "560001",
+    ecoCredits: 8000,
+    level: "Gold",
+    createdAt: "2023-01-15T10:30:00Z",
+    updatedAt: "2023-04-10T14:20:00Z",
+    registeredEvents: ["e1", "e3"],
+    orders: [],
+    cart: []
   },
   {
-    id: "2",
-    title: "Proper Battery Disposal",
-    content: "Never throw batteries in regular trash. They contain toxic chemicals that can leach into soil and water. Use designated battery recycling points for safe disposal.",
-    category: "Batteries",
-    imageUrl: "https://images.unsplash.com/photo-1584552539879-37e34a724a46?w=500&h=350&fit=crop"
+    id: "u2",
+    firstName: "Jane",
+    lastName: "Smith",
+    email: "jane@example.com",
+    password: "jane123",
+    ecoCredits: 3500,
+    level: "Silver",
+    createdAt: "2023-02-20T09:15:00Z",
+    updatedAt: "2023-04-05T16:45:00Z",
+    registeredEvents: ["e2"],
+    orders: [],
+    cart: []
   },
   {
-    id: "3",
-    title: "E-waste Separation",
-    content: "Create a separate bin for electronic waste at home. When it's full, take it to an e-waste collection center rather than mixing with regular recycling.",
-    category: "Home",
-    imageUrl: "https://images.unsplash.com/photo-1528323273322-d81458248d40?w=500&h=350&fit=crop"
-  },
-  {
-    id: "4",
-    title: "Buy Refurbished",
-    content: "Consider purchasing refurbished electronics instead of new ones. This reduces manufacturing demand and gives devices a second life.",
-    category: "Shopping",
-    imageUrl: "https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=500&h=350&fit=crop"
-  },
-  {
-    id: "5",
-    title: "Data Security in Recycling",
-    content: "Always perform a factory reset and remove storage devices before recycling your electronics to protect your personal data.",
-    category: "Security",
-    imageUrl: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&h=350&fit=crop"
-  },
-  {
-    id: "6",
-    title: "Donate Usable Electronics",
-    content: "If your electronics still work but you no longer need them, consider donating to schools, community centers, or organizations that can put them to good use.",
-    category: "Community",
-    imageUrl: "https://images.unsplash.com/photo-1593113646773-028c64a8f1b8?w=500&h=350&fit=crop"
-  },
-  {
-    id: "7",
-    title: "Repair Instead of Replace",
-    content: "Many common electronics issues can be fixed. Look for repair cafes or tutorials online before deciding to replace a device.",
-    category: "Maintenance",
-    imageUrl: "https://images.unsplash.com/photo-1597424216801-5a74ff6a7ed6?w=500&h=350&fit=crop"
-  },
-  {
-    id: "8",
-    title: "Reduce Packaging Waste",
-    content: "When buying new electronics, consider the packaging waste. Choose brands that use minimal, recyclable packaging materials.",
-    category: "Shopping",
-    imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&h=350&fit=crop"
+    id: "admin",
+    firstName: "Admin",
+    lastName: "User",
+    email: "admin@greenbyte.com",
+    password: "admin123",
+    ecoCredits: 999999, // Infinite credits for testing
+    level: "Admin",
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-04-01T00:00:00Z",
+    registeredEvents: [],
+    orders: [],
+    cart: []
   }
 ];
 
-// Mock chatbot responses
-export interface MockChatbotResponse {
-  question: string;
-  answer: string;
-}
-
-let chatbotResponses: MockChatbotResponse[] = [
+const products: MockProduct[] = [
   {
-    question: "How do I recycle old electronics?",
-    answer: "You can recycle your old electronics through Green Byte by scheduling a pickup on our website. We'll collect your items and award you EcoCredits based on their value. Alternatively, you can drop them off at one of our collection points."
+    id: "p1",
+    name: "Refurbished iPhone 12",
+    description: "This refurbished iPhone 12 has been fully tested and restored to factory settings. It comes with a 1-year warranty and all original accessories.",
+    price: 499,
+    ecoCredits: 4990,
+    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
+    category: "phones",
+    condition: "Excellent - Like new with minimal signs of use",
+    specs: ["128GB Storage", "6.1-inch Super Retina XDR display", "A14 Bionic chip", "Dual 12MP camera system", "Face ID"],
+    stock: 15,
+    rating: 4.5,
+    reviews: 128,
+    seller: "Green Electronics",
+    createdAt: "2023-03-15T10:30:00Z"
   },
   {
-    question: "What happens to my e-waste?",
-    answer: "When we receive your e-waste, we assess it for potential refurbishment. Devices that can be restored are refurbished and sold in our marketplace. Components that can't be reused are responsibly recycled through our certified recycling partners to minimize environmental impact."
+    id: "p2",
+    name: "Restored MacBook Air (2020)",
+    description: "This MacBook Air has been professionally refurbished with new battery and keyboard. Perfect for students and professionals alike.",
+    price: 799,
+    ecoCredits: 7990,
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop",
+    category: "laptops",
+    condition: "Very Good - Minor scratches on bottom case",
+    specs: ["Apple M1 Chip", "8GB RAM", "256GB SSD", "13.3-inch Retina display", "Touch ID"],
+    stock: 8,
+    rating: 4.7,
+    reviews: 95,
+    seller: "Apple Renewed",
+    createdAt: "2023-03-10T14:20:00Z"
   },
   {
-    question: "How do EcoCredits work?",
-    answer: "EcoCredits are our reward currency for recycling. You earn them when you recycle electronics with us. The amount depends on the type, condition, and age of your devices. You can use EcoCredits to purchase refurbished items in our marketplace or exchange them for discounts and rewards."
+    id: "p3",
+    name: "Refurbished Sony WH-1000XM4 Headphones",
+    description: "Industry-leading noise cancellation headphones with premium sound quality. These have been professionally cleaned and tested.",
+    price: 229,
+    ecoCredits: 2290,
+    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&h=300&fit=crop",
+    category: "audio",
+    condition: "Good - Light wear on ear cushions",
+    specs: ["Industry-leading noise cancellation", "30-hour battery life", "Touch controls", "Speak-to-chat technology"],
+    stock: 12,
+    rating: 4.8,
+    reviews: 203,
+    seller: "Sound Revival",
+    createdAt: "2023-02-28T09:15:00Z"
   },
   {
-    question: "Can I recycle broken electronics?",
-    answer: "Yes! We accept broken electronics. Even if devices aren't working, they contain valuable materials that can be recycled. You'll still earn EcoCredits for recycling broken items, though the amount may be less than for working devices."
+    id: "p4",
+    name: "Reconditioned Samsung Galaxy S21",
+    description: "This Galaxy S21 has been thoroughly tested and restored to like-new condition. Full functionality with minor cosmetic imperfections.",
+    price: 389,
+    ecoCredits: 3890,
+    image: "https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=400&h=300&fit=crop",
+    category: "phones",
+    condition: "Good - Minor scratches on frame",
+    specs: ["8GB RAM", "128GB Storage", "6.2-inch Dynamic AMOLED display", "64MP triple camera", "5G Enabled"],
+    stock: 7,
+    rating: 4.2,
+    reviews: 87,
+    seller: "Galaxy Renewed",
+    createdAt: "2023-03-05T11:30:00Z"
   },
   {
-    question: "How much are my old devices worth?",
-    answer: "The value of your devices depends on their type, age, condition, and current market demand. Working smartphones and laptops typically earn the most EcoCredits. You can get an estimate by using the evaluation tool on our website or mobile app."
+    id: "p5",
+    name: "Refurbished iPad Pro 12.9\" (2021)",
+    description: "This iPad Pro has been professionally refurbished and is in excellent condition. Comes with charger and 6-month warranty.",
+    price: 899,
+    ecoCredits: 8990,
+    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=300&fit=crop",
+    category: "tablets",
+    condition: "Excellent - No visible wear",
+    specs: ["M1 chip", "12.9-inch Liquid Retina XDR display", "256GB Storage", "12MP Ultra Wide front camera with Center Stage", "5G connectivity"],
+    stock: 5,
+    rating: 4.9,
+    reviews: 56,
+    seller: "Apple Certified Refurbished",
+    createdAt: "2023-03-20T15:45:00Z"
   },
   {
-    question: "Is my data safe when I recycle?",
-    answer: "Data security is our priority. We recommend performing a factory reset on your devices before recycling. For additional security, we provide a certified data wiping service for all storage devices we receive, following industry-standard protocols to ensure your information is completely removed."
+    id: "p6",
+    name: "Renewed Dell XPS 13",
+    description: "This Dell XPS 13 has been refurbished to meet manufacturer specifications. Includes new battery and comes with Windows 11 Pro.",
+    price: 749,
+    ecoCredits: 7490,
+    image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400&h=300&fit=crop",
+    category: "laptops",
+    condition: "Very Good - Minor wear on keyboard",
+    specs: ["11th Gen Intel Core i7", "16GB RAM", "512GB SSD", "13.4-inch FHD+ display", "Thunderbolt 4"],
+    stock: 6,
+    rating: 4.6,
+    reviews: 73,
+    seller: "Dell Renewed",
+    createdAt: "2023-02-25T13:10:00Z"
+  },
+  {
+    id: "p7",
+    name: "Restored Nintendo Switch",
+    description: "This Nintendo Switch has been refurbished and tested to ensure full functionality. Perfect for gaming at home or on the go.",
+    price: 229,
+    ecoCredits: 2290,
+    image: "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=400&h=300&fit=crop",
+    category: "gaming",
+    condition: "Good - Light scratches on screen protector",
+    specs: ["32GB Storage", "6.2-inch touch screen", "TV Mode, Tabletop Mode, Handheld Mode", "Includes Joy-Con controllers"],
+    stock: 9,
+    rating: 4.4,
+    reviews: 112,
+    seller: "GameRevive",
+    createdAt: "2023-03-08T10:00:00Z"
+  },
+  {
+    id: "p8",
+    name: "Reconditioned Canon EOS R6",
+    description: "Professional mirrorless camera that has been factory reconditioned. Includes battery, charger and 90-day warranty.",
+    price: 1799,
+    ecoCredits: 17990,
+    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop",
+    category: "cameras",
+    condition: "Excellent - Professionally refurbished",
+    specs: ["20MP Full-Frame CMOS Sensor", "4K60p Video Recording", "In-Body Image Stabilization", "12 fps Mechanical Shutter", "Dual Pixel CMOS AF II"],
+    stock: 3,
+    rating: 4.8,
+    reviews: 42,
+    seller: "Canon Certified Refurbished",
+    createdAt: "2023-03-22T09:30:00Z"
+  },
+  {
+    id: "p9",
+    name: "Refurbished Dyson V11 Vacuum",
+    description: "This Dyson V11 has been thoroughly tested and restored with genuine Dyson parts. Includes all attachments and 1-year warranty.",
+    price: 399,
+    ecoCredits: 3990,
+    image: "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=400&h=300&fit=crop",
+    category: "appliances",
+    condition: "Very Good - Light cosmetic wear",
+    specs: ["Up to 60 minutes of fade-free power", "LCD screen display", "High Torque cleaner head", "HEPA filtration", "Point & shoot bin emptying"],
+    stock: 7,
+    rating: 4.5,
+    reviews: 89,
+    seller: "Dyson Certified Refurbished",
+    createdAt: "2023-03-12T14:15:00Z"
+  },
+  {
+    id: "p10",
+    name: "Restored Bose QuietComfort 35 II",
+    description: "These premium noise-cancelling headphones have been professionally restored and tested for audio quality and comfort.",
+    price: 189,
+    ecoCredits: 1890,
+    image: "https://images.unsplash.com/photo-1613040809024-b4ef7ba99bc3?w=400&h=300&fit=crop",
+    category: "audio",
+    condition: "Good - Minor wear on ear cushions",
+    specs: ["World-class noise cancellation", "Bluetooth and NFC pairing", "Up to 20 hours battery life", "Alexa voice control", "Balanced audio performance"],
+    stock: 11,
+    rating: 4.3,
+    reviews: 156,
+    seller: "Bose Renewed",
+    createdAt: "2023-02-18T16:20:00Z"
+  },
+  {
+    id: "p11",
+    name: "Refurbished GoPro HERO10 Black",
+    description: "This GoPro HERO10 has been factory refurbished to ensure it meets original specifications. Perfect for capturing your adventures.",
+    price: 329,
+    ecoCredits: 3290,
+    image: "https://images.unsplash.com/photo-1525328557941-8d523746c6e5?w=400&h=300&fit=crop",
+    category: "cameras",
+    condition: "Excellent - Minimal signs of use",
+    specs: ["5.3K Video", "23MP Photos", "HyperSmooth 4.0 Stabilization", "Waterproof to 33ft", "Front and rear LCD screens"],
+    stock: 6,
+    rating: 4.6,
+    reviews: 67,
+    seller: "GoPro Refurbished",
+    createdAt: "2023-03-25T11:40:00Z"
+  },
+  {
+    id: "p12",
+    name: "Renewed Philips Hue Starter Kit",
+    description: "This smart lighting kit has been tested and certified. Includes bridge and 4 color bulbs to transform your home lighting.",
+    price: 129,
+    ecoCredits: 1290,
+    image: "https://images.unsplash.com/photo-1565741171094-35ab1c47cae9?w=400&h=300&fit=crop",
+    category: "smart home",
+    condition: "Excellent - Like new in box",
+    specs: ["4 Color A19 Bulbs", "Hue Bridge included", "16 million colors", "Voice control with Alexa, Google Assistant", "Create custom scenes"],
+    stock: 14,
+    rating: 4.7,
+    reviews: 93,
+    seller: "Smart Home Renewed",
+    createdAt: "2023-03-15T13:25:00Z"
+  },
+  {
+    id: "p13",
+    name: "Reconditioned Apple Watch Series 6",
+    description: "This Apple Watch has been professionally refurbished with a new battery. Track your fitness and stay connected on the go.",
+    price: 259,
+    ecoCredits: 2590,
+    image: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400&h=300&fit=crop",
+    category: "wearables",
+    condition: "Very Good - Minor scratches on case",
+    specs: ["44mm case size", "GPS + Cellular", "Always-On Retina display", "Blood Oxygen app", "ECG app"],
+    stock: 8,
+    rating: 4.5,
+    reviews: 112,
+    seller: "Apple Certified Refurbished",
+    createdAt: "2023-03-08T09:50:00Z"
+  },
+  {
+    id: "p14",
+    name: "Restored Microsoft Surface Pro 7",
+    description: "This Surface Pro 7 has been refurbished to meet Microsoft's quality standards. The perfect 2-in-1 for productivity on the go.",
+    price: 649,
+    ecoCredits: 6490,
+    image: "https://images.unsplash.com/photo-1617469767053-3ef9567d152f?w=400&h=300&fit=crop",
+    category: "laptops",
+    condition: "Excellent - Minimal signs of use",
+    specs: ["10th Gen Intel Core i5", "8GB RAM", "256GB SSD", "12.3\" PixelSense Display", "All-day battery life"],
+    stock: 5,
+    rating: 4.4,
+    reviews: 78,
+    seller: "Microsoft Certified Refurbished",
+    createdAt: "2023-03-18T10:35:00Z"
+  },
+  {
+    id: "p15",
+    name: "Refurbished LG 55\" 4K OLED TV",
+    description: "This high-end OLED TV has been professionally reconditioned and tested. Experience stunning picture quality with perfect blacks.",
+    price: 899,
+    ecoCredits: 8990,
+    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=300&fit=crop",
+    category: "televisions",
+    condition: "Very Good - No screen issues",
+    specs: ["55-inch 4K OLED Display", "Dolby Vision IQ & Dolby Atmos", "webOS Smart TV", "HDMI 2.1 for gaming", "AI Picture Pro"],
+    stock: 4,
+    rating: 4.8,
+    reviews: 63,
+    seller: "LG Certified Refurbished",
+    createdAt: "2023-03-22T16:40:00Z"
+  },
+  {
+    id: "p16",
+    name: "Reconditioned Roomba i7+",
+    description: "This Roomba i7+ has been factory refurbished. Features automatic dirt disposal and smart mapping for effortless cleaning.",
+    price: 549,
+    ecoCredits: 5490,
+    image: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&h=300&fit=crop",
+    category: "appliances",
+    condition: "Excellent - Fully refurbished",
+    specs: ["Automatic Dirt Disposal", "Smart Mapping", "10x Power-Lifting Suction", "Works with Alexa & Google Assistant", "Ideal for pet hair"],
+    stock: 6,
+    rating: 4.6,
+    reviews: 72,
+    seller: "iRobot Certified Refurbished",
+    createdAt: "2023-03-10T13:15:00Z"
+  },
+  {
+    id: "p17",
+    name: "Restored Nespresso Vertuo Coffee Machine",
+    description: "This Nespresso machine has been professionally restored and descaled. Brew perfect coffee and espresso with the touch of a button.",
+    price: 129,
+    ecoCredits: 1290,
+    image: "https://images.unsplash.com/photo-1579992357154-faf4bde95b3d?w=400&h=300&fit=crop",
+    category: "appliances",
+    condition: "Very Good - Minor wear on exterior",
+    specs: ["Single-Serve Coffee & Espresso Maker", "5 cup sizes", "Centrifusion technology", "Automatic pod recognition", "Fast heat-up time"],
+    stock: 10,
+    rating: 4.5,
+    reviews: 128,
+    seller: "Kitchen Renewed",
+    createdAt: "2023-03-05T14:20:00Z"
+  },
+  {
+    id: "p18",
+    name: "Refurbished Sony PlayStation 5",
+    description: "This PlayStation 5 has been professionally refurbished and tested. Experience next-gen gaming with lightning-fast loading times.",
+    price: 449,
+    ecoCredits: 4490,
+    image: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&h=300&fit=crop",
+    category: "gaming",
+    condition: "Excellent - Like new",
+    specs: ["AMD Zen 2 CPU", "10.28 TFLOPs GPU", "825GB SSD", "4K Gaming", "Includes DualSense controller"],
+    stock: 3,
+    rating: 4.9,
+    reviews: 56,
+    seller: "Game Renewed",
+    createdAt: "2023-03-26T09:10:00Z"
+  },
+  {
+    id: "p19",
+    name: "Restored Kindle Paperwhite",
+    description: "This Kindle Paperwhite has been refurbished to work and look like new. Perfect for reading anywhere with its glare-free display.",
+    price: 89,
+    ecoCredits: 890,
+    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop",
+    category: "tablets",
+    condition: "Very Good - Light cosmetic wear",
+    specs: ["6.8\" glare-free display", "8GB Storage", "Waterproof", "10 weeks of battery life", "Built-in adjustable light"],
+    stock: 15,
+    rating: 4.7,
+    reviews: 167,
+    seller: "Amazon Renewed",
+    createdAt: "2023-03-12T12:30:00Z"
+  },
+  {
+    id: "p20",
+    name: "Refurbished Sonos One SL",
+    description: "This Sonos One SL has been professionally refurbished. Fill your room with rich, detailed sound controlled by the Sonos app.",
+    price: 159,
+    ecoCredits: 1590,
+    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&h=300&fit=crop",
+    category: "audio",
+    condition: "Excellent - Factory refurbished",
+    specs: ["Rich room-filling sound", "Stream from 100+ services", "Multi-room listening", "Humidity resistant", "Compact design"],
+    stock: 7,
+    rating: 4.5,
+    reviews: 89,
+    seller: "Sonos Certified Refurbished",
+    createdAt: "2023-03-20T15:20:00Z"
   }
 ];
 
-// User Auth functions
-export const mockRegisterUser = (userData: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}) => {
-  // Check if user already exists
-  const existingUser = users.find(u => u.email === userData.email);
-  if (existingUser) {
-    return { error: "User with this email already exists" };
+const events: MockEvent[] = [
+  {
+    id: "e1",
+    title: "E-Waste Collection Drive",
+    description: "Bring your old electronics for responsible recycling. All participants will receive eco-credits based on the items recycled.",
+    date: "2025-05-15",
+    time: "09:00 AM - 02:00 PM",
+    location: "Green Park Community Center",
+    image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&h=500&fit=crop",
+    maxParticipants: 100,
+    currentParticipants: 45,
+    type: "collection",
+    ecoCreditsReward: 500,
+    organizer: "Green Byte Foundation"
+  },
+  {
+    id: "e2",
+    title: "DIY Electronics Repair Workshop",
+    description: "Learn how to repair common electronic issues and extend the life of your devices. Hands-on session with professional repair technicians.",
+    date: "2025-05-22",
+    time: "10:00 AM - 01:00 PM",
+    location: "Tech Hub Innovation Center",
+    image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&h=500&fit=crop",
+    maxParticipants: 30,
+    currentParticipants: 24,
+    type: "workshop",
+    ecoCreditsReward: 300,
+    organizer: "Repair Cafe Network"
+  },
+  {
+    id: "e3",
+    title: "Sustainable Technology Conference",
+    description: "Join industry experts for discussions on the future of sustainable technology and circular economy innovations.",
+    date: "2025-06-05",
+    time: "09:00 AM - 05:00 PM",
+    location: "Green Convention Center",
+    image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=500&fit=crop",
+    maxParticipants: 200,
+    currentParticipants: 125,
+    type: "conference",
+    ecoCreditsReward: 750,
+    organizer: "Sustainable Tech Alliance"
+  },
+  {
+    id: "e4",
+    title: "Community Upcycling Challenge",
+    description: "Transform discarded electronics into art, furniture, or functional items. Prizes for the most creative and practical upcycled creations.",
+    date: "2025-06-12",
+    time: "11:00 AM - 04:00 PM",
+    location: "Downtown Arts District",
+    image: "https://images.unsplash.com/photo-1607748851687-ba9a10d47fea?w=800&h=500&fit=crop",
+    maxParticipants: 50,
+    currentParticipants: 32,
+    type: "competition",
+    ecoCreditsReward: 600,
+    organizer: "Creative Reuse Coalition"
+  },
+  {
+    id: "e5",
+    title: "Green Coding Bootcamp",
+    description: "Learn how to write energy-efficient code and build sustainable software applications in this two-day intensive workshop.",
+    date: "2025-06-18",
+    time: "09:00 AM - 04:00 PM",
+    location: "University Technology Center",
+    image: "https://images.unsplash.com/photo-1623479322729-28b25c16b011?w=800&h=500&fit=crop",
+    maxParticipants: 40,
+    currentParticipants: 28,
+    type: "workshop",
+    ecoCreditsReward: 800,
+    organizer: "Green Code Initiative"
+  }
+];
+
+const ecoTips: MockEcoTip[] = [
+  {
+    id: "t1",
+    title: "Extend Your Devices' Lifespan",
+    content: "Keep your electronics in good condition by regularly cleaning them, using protective cases, and updating software. Simple maintenance can extend their life by years.",
+    category: "maintenance",
+    impact: "high",
+    imageUrl: "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t2",
+    title: "Proper E-Waste Disposal",
+    content: "Never throw electronics in regular trash. Use certified e-waste recycling centers to ensure hazardous materials are properly handled and valuable materials recovered.",
+    category: "recycling",
+    impact: "high",
+    imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t3",
+    title: "Energy-Saving Settings",
+    content: "Configure your devices to use energy-saving modes. Adjust screen brightness, enable sleep mode after short periods of inactivity, and disable features you don't use.",
+    category: "energy",
+    impact: "medium",
+    imageUrl: "https://images.unsplash.com/photo-1542435503-956c469947f6?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t4",
+    title: "Buy Refurbished Electronics",
+    content: "Purchasing refurbished devices can reduce e-waste by up to 80% compared to buying new. Many refurbished products work like new but at a fraction of the cost.",
+    category: "purchasing",
+    impact: "high",
+    imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t5",
+    title: "Unplug When Not In Use",
+    content: "Devices continue to draw power even when turned off. Unplug chargers and electronics when not in use or use power strips that can be turned off completely.",
+    category: "energy",
+    impact: "medium",
+    imageUrl: "https://images.unsplash.com/photo-1592890288564-76628a30a657?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t6",
+    title: "Repair, Don't Replace",
+    content: "Many common issues with electronics can be fixed. Look up repair guides online or visit local repair cafes before deciding to replace your device.",
+    category: "maintenance",
+    impact: "high",
+    imageUrl: "https://images.unsplash.com/photo-1580974852861-c381510bc98e?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t7",
+    title: "Donate Working Electronics",
+    content: "If you upgrade, donate your old devices to schools, charities, or community organizations that can give them a second life.",
+    category: "reuse",
+    impact: "medium",
+    imageUrl: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t8",
+    title: "Use Cloud Storage Wisely",
+    content: "While cloud storage reduces the need for physical storage devices, it still consumes energy. Regularly clean up your cloud storage and delete unnecessary files.",
+    category: "digital",
+    impact: "low",
+    imageUrl: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t9",
+    title: "Choose Energy Efficient Devices",
+    content: "Look for ENERGY STAR certification when purchasing new electronics. These products consume less power and can significantly reduce your carbon footprint.",
+    category: "purchasing",
+    impact: "medium",
+    imageUrl: "https://images.unsplash.com/photo-1605792657660-596af9009e82?w=400&h=300&fit=crop"
+  },
+  {
+    id: "t10",
+    title: "Participate in Trade-In Programs",
+    content: "Many manufacturers offer trade-in programs where you can exchange your old device for credit toward a new purchase. This ensures proper recycling of your old device.",
+    category: "recycling",
+    impact: "medium",
+    imageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&h=300&fit=crop"
+  }
+];
+
+// Mock Class to handle database operations
+class MockDB {
+  users: MockUser[];
+  products: MockProduct[];
+  events: MockEvent[];
+  ecoTips: MockEcoTip[];
+
+  constructor() {
+    this.users = users;
+    this.products = products;
+    this.events = events;
+    this.ecoTips = ecoTips;
   }
 
-  // Create new user with bonus EcoCredits
-  const newUser: MockUser = {
-    id: (users.length + 1).toString(),
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    email: userData.email,
-    password: userData.password, // In a real app, this would be hashed
-    ecoCredits: 5000, // Bonus for new sign-ups
-    createdAt: new Date()
-  };
-
-  users.push(newUser);
-
-  // Return user without password
-  const { password, ...userWithoutPassword } = newUser;
-  return {
-    user: userWithoutPassword,
-    token: "mock-jwt-token-" + newUser.id
-  };
-};
-
-export const mockLoginUser = (email: string, password: string) => {
-  // Find user
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) {
-    return { error: "Invalid credentials" };
+  // User methods
+  loginUser(email: string, password: string) {
+    const user = this.users.find(u => u.email === email && u.password === password);
+    if (!user) {
+      return { error: "Invalid credentials" };
+    }
+    return {
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        ecoCredits: user.ecoCredits,
+        level: user.level
+      },
+      token: `mock-token-${user.id}-${Date.now()}`
+    };
   }
 
-  // Return user without password
-  const { password: _, ...userWithoutPassword } = user;
-  return {
-    user: userWithoutPassword,
-    token: "mock-jwt-token-" + user.id
-  };
-};
+  registerUser(userData: { firstName: string; lastName: string; email: string; password: string; }) {
+    // Check if user already exists
+    const existingUser = this.users.find(u => u.email === userData.email);
+    if (existingUser) {
+      return { error: "User with this email already exists" };
+    }
 
-export const mockGetUserById = (id: string) => {
-  const user = users.find(u => u.id === id);
-  if (!user) {
-    return { error: "User not found" };
+    // Create new user with 5000 EcoCredits bonus
+    const newUser: MockUser = {
+      id: `u${this.users.length + 1}`,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      password: userData.password,
+      ecoCredits: 5000, // Welcome bonus
+      level: "Bronze",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      registeredEvents: [],
+      orders: [],
+      cart: []
+    };
+
+    this.users.push(newUser);
+    return {
+      user: {
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        ecoCredits: newUser.ecoCredits,
+        level: newUser.level
+      },
+      token: `mock-token-${newUser.id}-${Date.now()}`
+    };
   }
 
-  // Return user without password
-  const { password, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword };
-};
-
-export const mockUpdateUserCredits = (userId: string, amount: number) => {
-  const userIndex = users.findIndex(u => u.id === userId);
-  if (userIndex === -1) {
-    return { error: "User not found" };
+  getUserById(userId: string) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) {
+      return { error: "User not found" };
+    }
+    return {
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        ecoCredits: user.ecoCredits,
+        level: user.level,
+        phone: user.phone,
+        streetAddress: user.streetAddress,
+        apartmentNumber: user.apartmentNumber,
+        city: user.city,
+        state: user.state,
+        pinCode: user.pinCode
+      }
+    };
   }
 
-  users[userIndex].ecoCredits += amount;
-  return { newBalance: users[userIndex].ecoCredits };
-};
+  updateUserProfile(userId: string, data: Partial<MockUser>) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
 
-// Product functions
-export const mockGetAllProducts = () => {
-  return { products };
-};
+    // Update user data
+    this.users[userIndex] = {
+      ...this.users[userIndex],
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
 
-export const mockGetProductById = (id: string) => {
-  const product = products.find(p => p.id === id);
-  if (!product) {
-    return { error: "Product not found" };
+    return {
+      user: {
+        id: this.users[userIndex].id,
+        firstName: this.users[userIndex].firstName,
+        lastName: this.users[userIndex].lastName,
+        email: this.users[userIndex].email,
+        ecoCredits: this.users[userIndex].ecoCredits,
+        level: this.users[userIndex].level,
+        phone: this.users[userIndex].phone,
+        streetAddress: this.users[userIndex].streetAddress,
+        apartmentNumber: this.users[userIndex].apartmentNumber,
+        city: this.users[userIndex].city,
+        state: this.users[userIndex].state,
+        pinCode: this.users[userIndex].pinCode
+      }
+    };
   }
-  return { product };
-};
 
-// Event functions
-export const mockGetAllEvents = () => {
-  return { events };
-};
-
-export const mockGetEventById = (id: string) => {
-  const event = events.find(e => e.id === id);
-  if (!event) {
-    return { error: "Event not found" };
+  // Product methods
+  getAllProducts() {
+    return { products: this.products };
   }
-  return { event };
-};
 
-// Eco tips functions
-export const mockGetEcoTips = (limit?: number) => {
-  if (limit) {
-    return { tips: ecoTips.slice(0, limit) };
+  getProductById(productId: string) {
+    const product = this.products.find(p => p.id === productId);
+    if (!product) {
+      return { error: "Product not found" };
+    }
+    return { product };
   }
-  return { tips: ecoTips };
-};
 
-// Chatbot functions
-export const mockGetChatbotResponse = (question: string) => {
-  // Try to find an exact match
-  let response = chatbotResponses.find(r => 
-    r.question.toLowerCase() === question.toLowerCase()
-  );
-  
-  // If no exact match, try to find a response with keywords
-  if (!response) {
-    response = chatbotResponses.find(r => 
-      question.toLowerCase().includes(r.question.toLowerCase().split(" ")[0])
+  getProductsByCategory(category: string) {
+    const filteredProducts = this.products.filter(p => p.category === category);
+    return { products: filteredProducts };
+  }
+
+  // Cart methods
+  getCart(userId: string) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    // Get full product details for cart items
+    const cartItems = user.cart.map(item => {
+      const product = this.products.find(p => p.id === item.productId);
+      return {
+        id: item.id,
+        product: product,
+        quantity: item.quantity
+      };
+    });
+
+    return { cartItems };
+  }
+
+  addToCart(userId: string, productId: string, quantity: number) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    const product = this.products.find(p => p.id === productId);
+    if (!product) {
+      return { error: "Product not found" };
+    }
+
+    // Check if item already in cart
+    const existingItemIndex = this.users[userIndex].cart.findIndex(
+      item => item.productId === productId
     );
-  }
-  
-  if (response) {
-    return { answer: response.answer };
-  }
-  
-  // Default response
-  return { 
-    answer: "I'm not sure about that. Please contact our support team for more information or try asking about recycling, EcoCredits, or our services." 
-  };
-};
 
-// Export all mock functions
-export const mockDatabase = {
-  users,
-  products,
-  events,
-  ecoTips,
-  chatbotResponses,
-  registerUser: mockRegisterUser,
-  loginUser: mockLoginUser,
-  getUserById: mockGetUserById,
-  updateUserCredits: mockUpdateUserCredits,
-  getAllProducts: mockGetAllProducts,
-  getProductById: mockGetProductById,
-  getAllEvents: mockGetAllEvents,
-  getEventById: mockGetEventById,
-  getEcoTips: mockGetEcoTips,
-  getChatbotResponse: mockGetChatbotResponse
-};
+    if (existingItemIndex > -1) {
+      // Update quantity
+      this.users[userIndex].cart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item
+      this.users[userIndex].cart.push({
+        id: `ci${Date.now()}`,
+        productId,
+        quantity
+      });
+    }
 
+    return { success: true };
+  }
+
+  updateCartItem(userId: string, cartItemId: string, quantity: number) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    const cartItemIndex = this.users[userIndex].cart.findIndex(
+      item => item.id === cartItemId
+    );
+
+    if (cartItemIndex === -1) {
+      return { error: "Cart item not found" };
+    }
+
+    if (quantity <= 0) {
+      // Remove item if quantity is 0 or less
+      this.users[userIndex].cart = this.users[userIndex].cart.filter(
+        item => item.id !== cartItemId
+      );
+    } else {
+      // Update quantity
+      this.users[userIndex].cart[cartItemIndex].quantity = quantity;
+    }
+
+    return { success: true };
+  }
+
+  removeFromCart(userId: string, cartItemId: string) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    this.users[userIndex].cart = this.users[userIndex].cart.filter(
+      item => item.id !== cartItemId
+    );
+
+    return { success: true };
+  }
+
+  clearCart(userId: string) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    this.users[userIndex].cart = [];
+    return { success: true };
+  }
+
+  // Order methods
+  createOrder(userId: string) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    const user = this.users[userIndex];
+    if (user.cart.length === 0) {
+      return { error: "Cart is empty" };
+    }
+
+    // Calculate order totals
+    let totalPrice = 0;
+    let totalEcoCredits = 0;
+    const orderItems = user.cart.map(item => {
+      const product = this.products.find(p => p.id === item.productId);
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+
+      const itemPrice = product.price * item.quantity;
+      const itemEcoCredits = product.ecoCredits * item.quantity;
+      
+      totalPrice += itemPrice;
+      totalEcoCredits += itemEcoCredits;
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        price: product.price,
+        ecoCredits: product.ecoCredits
+      };
+    });
+
+    // Check if user has enough eco credits
+    if (user.ecoCredits < totalEcoCredits) {
+      return { error: "Insufficient eco credits" };
+    }
+
+    // Create order
+    const order: MockOrder = {
+      id: `ord${Date.now()}`,
+      userId: user.id,
+      products: orderItems,
+      totalPrice,
+      totalEcoCredits,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    };
+
+    // Deduct eco credits
+    this.users[userIndex].ecoCredits -= totalEcoCredits;
+
+    // Update stock
+    order.products.forEach(item => {
+      const productIndex = this.products.findIndex(p => p.id === item.productId);
+      if (productIndex !== -1) {
+        this.products[productIndex].stock -= item.quantity;
+      }
+    });
+
+    // Add order to user's orders
+    this.users[userIndex].orders.push(order);
+
+    // Clear cart
+    this.users[userIndex].cart = [];
+
+    return { order };
+  }
+
+  getUserOrders(userId: string) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    return { orders: user.orders };
+  }
+
+  // Event methods
+  getAllEvents() {
+    return { events: this.events };
+  }
+
+  getEventById(eventId: string) {
+    const event = this.events.find(e => e.id === eventId);
+    if (!event) {
+      return { error: "Event not found" };
+    }
+    return { event };
+  }
+
+  registerForEvent(userId: string, eventId: string) {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return { error: "User not found" };
+    }
+
+    const eventIndex = this.events.findIndex(e => e.id === eventId);
+    if (eventIndex === -1) {
+      return { error: "Event not found" };
+    }
+
+    // Check if event is full
+    if (
+      this.events[eventIndex].maxParticipants > 0 &&
+      this.events[eventIndex].currentParticipants >= this.events[eventIndex].maxParticipants
+    ) {
+      return { error: "Event is full" };
+    }
+
+    // Check if user is already registered
+    if (this.users[userIndex].registeredEvents.includes(eventId)) {
+      return { error: "Already registered for this event" };
+    }
+
+    // Register user for event
+    this.users[userIndex].registeredEvents.push(eventId);
+    
+    // Increment participant count
+    this.events[eventIndex].currentParticipants += 1;
+    
+    // Award eco credits
+    this.users[userIndex].ecoCredits += this.events[eventIndex].ecoCreditsReward;
+
+    return { 
+      success: true,
+      message: `Successfully registered for ${this.events[eventIndex].title} and earned ${this.events[eventIndex].ecoCreditsReward} eco credits!`
+    };
+  }
+
+  getUserRegisteredEvents(userId: string) {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    const registeredEvents = this.events.filter(event =>
+      user.registeredEvents.includes(event.id)
+    );
+
+    return { events: registeredEvents };
+  }
+
+  // Eco Tips methods
+  getAllEcoTips() {
+    return { ecoTips: this.ecoTips };
+  }
+
+  getEcoTipsByCategory(category: string) {
+    const filteredTips = this.ecoTips.filter(tip => tip.category === category);
+    return { ecoTips: filteredTips };
+  }
+}
+
+const mockDatabase = new MockDB();
 export default mockDatabase;

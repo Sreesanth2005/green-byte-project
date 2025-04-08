@@ -1,154 +1,154 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Calendar, Clock, Users, Search } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Search, Calendar, MapPin, Users, Filter } from "lucide-react";
+import { Link } from "react-router-dom";
 import mockDatabase, { MockEvent } from "@/utils/mockDatabase";
 
 const Events = () => {
   const [events, setEvents] = useState<MockEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("all");
   
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
+  const eventTypes = ["all", "collection", "workshop", "conference", "competition"];
+
   useEffect(() => {
     fetchEvents();
   }, []);
-  
+
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      
-      // Use mock database instead of supabase
       const { events } = mockDatabase.getAllEvents();
       setEvents(events);
-      
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error fetching events",
-        description: error.message || "Could not load events"
-      });
+    } catch (error) {
+      console.error("Error fetching events:", error);
     } finally {
       setLoading(false);
     }
   };
-  
-  const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-  
+
+  const filteredEvents = events.filter(event => {
+    // Filter by type
+    const typeMatch = selectedType === "all" || event.type === selectedType;
+    
+    // Filter by search query
+    const searchMatch = !searchQuery ||
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return typeMatch && searchMatch;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-6 pt-24 pb-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Upcoming E-waste Events</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Join our community events to learn more about e-waste recycling, 
-            participate in collection drives, and connect with like-minded individuals.
-          </p>
-        </div>
-        
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            className="pl-10"
-            placeholder="Search events by title, location, or description"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold">No events found</h3>
-            <p className="text-gray-500 mt-2">
-              {searchTerm 
-                ? `No events match your search for "${searchTerm}"`
-                : "There are no upcoming events at the moment. Check back soon!"}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredEvents.map(event => (
-              <div key={event.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                <div className="h-48 overflow-hidden relative">
-                  <img 
-                    src={event.image_url || "/placeholder.svg"} 
-                    alt={event.title} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-                    {event.current_participants >= event.max_participants
-                      ? "Fully Booked"
-                      : `${event.current_participants}/${event.max_participants} Registered`}
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 line-clamp-1">{event.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm">
-                      <Calendar className="h-4 w-4 mr-2 text-primary" />
-                      <span>{formatDate(event.event_date)}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Clock className="h-4 w-4 mr-2 text-primary" />
-                      <span>{event.event_time}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <MapPin className="h-4 w-4 mr-2 text-primary" />
-                      <span>{event.location}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Users className="h-4 w-4 mr-2 text-primary" />
-                      <span>
-                        {event.current_participants} / {event.max_participants} participants
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full"
-                    onClick={() => navigate(`/event/${event.id}`)}
-                    disabled={event.current_participants >= event.max_participants}
-                  >
-                    {event.current_participants >= event.max_participants
-                      ? "Event Full"
-                      : "View Details & Register"}
-                  </Button>
-                </div>
+      <main className="pt-24 pb-16">
+        {/* Hero Section */}
+        <div className="relative mb-12">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70"></div>
+          <div className="relative max-w-7xl mx-auto px-6 py-16">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                Join Our Community Events
+              </h1>
+              <p className="text-white/90 mb-8">
+                Participate in our e-waste collection drives, workshops, and community initiatives. 
+                Learn about sustainable electronics and earn eco-credits while making a positive impact.
+              </p>
+              <div className="relative max-w-md">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search events..."
+                  className="pl-10"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               </div>
-            ))}
+            </div>
           </div>
-        )}
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Event Type Filters */}
+          <div className="mb-8 overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {eventTypes.map(type => (
+                <Button
+                  key={type}
+                  variant={selectedType === type ? "default" : "outline"}
+                  onClick={() => setSelectedType(type)}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Events List */}
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : filteredEvents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {filteredEvents.map(event => (
+                <Link key={event.id} to={`/event/${event.id}`} className="block">
+                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="mb-2">
+                        <span className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full">
+                          {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                      <div className="mt-auto space-y-2">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {event.date} • {event.time}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="mr-2 h-4 w-4" />
+                          {event.location}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Users className="mr-2 h-4 w-4" />
+                            {event.currentParticipants} / {event.maxParticipants || '∞'}
+                          </div>
+                          <div className="text-sm font-medium text-primary">
+                            +{event.ecoCreditsReward} Credits
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 border-t">
+                      <Button className="w-full">View Details</Button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <h2 className="text-2xl font-bold mb-2">No events found</h2>
+              <p className="text-gray-600 mb-8">Try adjusting your filters or check back later for new events.</p>
+            </div>
+          )}
+        </div>
       </main>
-      
+
       <Footer />
     </div>
   );
