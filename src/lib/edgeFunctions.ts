@@ -1,66 +1,54 @@
 
-import { supabase } from './supabaseClient';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import mockDatabase from '@/utils/mockDatabase';
 
-// Initialize the Google Generative AI with the provided API key
-const genAI = new GoogleGenerativeAI("AIzaSyAuRC8nEx9CZ1220iOnliDpde5jOR-zgk0");
-
-export const analyzeRecyclingImpact = async (userId: string | undefined, category: string, timeFrame: string) => {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    
-    // Get user recycling data from Supabase if user is logged in
-    let recyclingData = null;
-    if (userId) {
-      const { data, error } = await supabase
-        .from('recycling_stats')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (!error) {
-        recyclingData = data;
-      }
-    }
-    
-    // Create a prompt for Gemini AI
-    const prompt = `
-    As an environmental impact analyst for Green Byte, generate an analysis of the user's e-waste recycling impact.
-    
-    ${recyclingData ? `Here is the user's recycling data: ${JSON.stringify(recyclingData)}` : 'The user does not have specific recycling data yet.'}
-    Category filter: ${category}
-    Time period: ${timeFrame}
-    
-    Please provide an analysis that includes:
-    1. Environmental impact (CO2 saved, water saved, energy saved)
-    2. Resources recovered (metals, plastics, etc.)
-    3. Comparison to average recycling habits
-    4. Suggestions for improving recycling habits
-    
-    Keep the response concise, informative, and motivational.
-    `;
-    
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    return { analysis: response.text() };
-  } catch (error) {
-    console.error("Error analyzing recycling impact:", error);
-    throw error;
-  }
-};
+// Since these functions were referenced in components, we'll implement them
+// using our mock database so they work with the existing code
 
 export const getRandomEcoTips = async (count: number = 5) => {
-  try {
-    const { data, error } = await supabase
-      .from('eco_tips')
-      .select('*')
-      .order('id', { ascending: false })
-      .limit(count);
-      
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error("Error fetching eco tips:", error);
-    throw error;
-  }
+  const { ecoTips } = mockDatabase.getAllEcoTips();
+  
+  // Randomly select tips up to the count requested
+  const shuffled = [...ecoTips].sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, count);
+  
+  // Format them for the components that use this function
+  return selected.map(tip => ({
+    tip: tip.content,
+    category: tip.category,
+    impact: tip.impact
+  }));
+};
+
+export const analyzeRecyclingImpact = async (
+  userId: string | undefined,
+  category: string,
+  timeFrame: string
+) => {
+  // Generate mock analysis text
+  const analysisText = `Based on your ${timeFrame} recycling data for ${category === 'all' ? 'all categories' : category}:
+
+You've recycled approximately 24.5 kg of e-waste, which has:
+• Prevented 85 kg of CO2 emissions (equivalent to planting 4 trees)
+• Recovered valuable materials including 0.5g of gold and 25g of copper
+• Saved 120 gallons of water that would have been used in new production
+
+Your recycling efforts rank in the top 25% of our Green Byte community. Keep up the great work!
+
+Recommendations:
+1. Consider recycling smaller electronics like chargers and cables
+2. Join our next community e-waste drive for additional EcoCredits
+3. Explore our marketplace for refurbished electronics to complete the cycle`;
+
+  return {
+    analysis: analysisText,
+    stats: {
+      totalPickups: 12,
+      ecoCreditsEarned: 3500,
+      categoryCounts: {
+        "electronics": 8,
+        "plastic": 3,
+        "glass": 1
+      }
+    }
+  };
 };

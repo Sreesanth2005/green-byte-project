@@ -16,9 +16,10 @@ const Analysis = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load eco tips
-    const { tips } = mockDatabase.getEcoTips(4);
-    setEcoTips(tips);
+    // Load eco tips using the correct method from mockDatabase
+    const tips = mockDatabase.getAllEcoTips().ecoTips;
+    // Take just a few tips for display
+    setEcoTips(tips.slice(0, 4));
   }, []);
 
   const handleAskQuestion = () => {
@@ -26,9 +27,19 @@ const Analysis = () => {
 
     setLoading(true);
     
-    // Simulate API call delay
+    // Simulate AI response since getChatbotResponse doesn't exist
     setTimeout(() => {
-      const { answer } = mockDatabase.getChatbotResponse(question);
+      // Generate a simple response based on the question
+      let answer = "Thank you for your question about recycling. Our team is working to provide the most accurate information about e-waste recycling and sustainability practices.";
+      
+      // Add some basic keyword matching for common questions
+      if (question.toLowerCase().includes("ecocredits")) {
+        answer = "EcoCredits are our virtual currency that you earn by recycling e-waste and participating in eco-friendly events. You can use these credits to purchase refurbished electronics in our marketplace.";
+      } else if (question.toLowerCase().includes("e-waste") || question.toLowerCase().includes("electronic waste")) {
+        answer = "E-waste or electronic waste refers to discarded electronic devices. Proper recycling of e-waste is crucial as these items contain toxic materials that can harm the environment if not disposed of properly.";
+      } else if (question.toLowerCase().includes("pickup")) {
+        answer = "You can schedule an e-waste pickup through our 'Schedule Pickup' page. Our team will come to your location to collect your electronic waste at your convenience.";
+      }
       
       setChatHistory(prev => [...prev, { 
         user: question, 

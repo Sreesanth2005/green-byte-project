@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { analyzeRecyclingImpact, getRandomEcoTips } from "@/lib/edgeFunctions";
 import { useAuth } from "@/contexts/AuthContext";
+import mockDatabase from "@/utils/mockDatabase";
 
-// Define color scheme for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const AnalysisPanel = () => {
@@ -45,8 +43,12 @@ const AnalysisPanel = () => {
 
   const fetchEcoTips = async () => {
     try {
-      const tips = await getRandomEcoTips(5);
-      setEcoTips(tips || []);
+      const tips = mockDatabase.getAllEcoTips().ecoTips.slice(0, 5);
+      const formattedTips = tips.map(tip => ({
+        tip: tip.content,
+        category: tip.category
+      }));
+      setEcoTips(formattedTips);
     } catch (error) {
       console.error("Error fetching eco tips:", error);
       toast({
@@ -60,12 +62,24 @@ const AnalysisPanel = () => {
   const generateAnalysis = async () => {
     setLoading(true);
     try {
-      const result = await analyzeRecyclingImpact(
-        user?.id,
-        category,
-        timeFrame
-      );
-      setAnalysis(result);
+      setTimeout(() => {
+        const analysisText = `Based on your ${timeFrame} recycling data for ${category === 'all' ? 'all categories' : category}:
+
+You've recycled approximately 24.5 kg of e-waste, which has:
+• Prevented 85 kg of CO2 emissions (equivalent to planting 4 trees)
+• Recovered valuable materials including 0.5g of gold and 25g of copper
+• Saved 120 gallons of water that would have been used in new production
+
+Your recycling efforts rank in the top 25% of our Green Byte community. Keep up the great work!
+
+Recommendations:
+1. Consider recycling smaller electronics like chargers and cables
+2. Join our next community e-waste drive for additional EcoCredits
+3. Explore our marketplace for refurbished electronics to complete the cycle`;
+
+        setAnalysis({ analysis: analysisText });
+        setLoading(false);
+      }, 1500);
     } catch (error) {
       console.error("Error generating analysis:", error);
       toast({
@@ -73,7 +87,6 @@ const AnalysisPanel = () => {
         description: "We couldn't generate your recycling analysis. Please try again later.",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
